@@ -14,6 +14,7 @@ project ("ENGINE")
 add_subdirectory(DEPENDENCIES/GLFW)
 add_subdirectory(DEPENDENCIES/GLAD)
 add_subdirectory(DEPENDENCIES/GLM)
+add_subdirectory(DEPENDENCIES/KTX)
 
 # Add source to this project's library.
 add_library (ENGINE 
@@ -23,8 +24,9 @@ add_library (ENGINE
 	"WINDOWS/Window.cpp" 
 	"UTILITIES/Time.h" 
 	"UTILITIES/Time.cpp" 
-
-)
+	"RENDERER/TEXTURE_KTX/TextureKTX2.h"
+	"RENDERER/TEXTURE_KTX/TextureKTX2.cpp"
+	 "RENDERER/SHADERS/Shader.h" "RENDERER/SHADERS/Shader.cpp")
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
@@ -34,6 +36,7 @@ target_link_libraries(ENGINE PUBLIC
 	glfw 
 	glad 
 	glm
+	ktx
 )
 
 

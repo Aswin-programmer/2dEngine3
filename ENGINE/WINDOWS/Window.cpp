@@ -8,7 +8,7 @@ GLFWwindow* Window::m_window = nullptr;
 float Window::beginTime = 0.0f;
 float Window::endTime = 0.0f;
 float Window::dt = 0.0f;
-float Window::r = 0.0f;
+float Window::r = 1.0f;
 float Window::g = 0.0f;
 float Window::b = 0.0f;
 float Window::a = 1.0f;
@@ -22,7 +22,7 @@ bool Window::init(const char* title) {
 
     // Configure GLFW
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     //Initialize variables:
@@ -64,14 +64,13 @@ bool Window::init(const char* title) {
 
     // Set viewport and resize callback
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
-    ////Setup of MouseListener:
-    //glfwSetCursorPosCallback(m_window, MouseListener::mousePosCallback);
-    //glfwSetMouseButtonCallback(m_window, MouseListener::mouseButtonCallback);
-    //glfwSetScrollCallback(m_window, MouseListener::mouseScrollCallback);
-    ////Setup of KeyListener:
-    //glfwSetKeyCallback(m_window, KeyListener::keyCallback);
 
     glEnable(GL_DEPTH_TEST);
+
+    //Find the maximum number of texture units the device supports
+    GLint units;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &units);
+    std::cout << "The maximum number of texture units the device supports is :" << units << std::endl;
 
     // Set initial viewport
     glViewport(0, 0, m_width, m_height);

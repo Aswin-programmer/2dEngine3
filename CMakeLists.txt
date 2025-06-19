@@ -11,7 +11,7 @@ endif()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
+ 
 project ("GetIntoGameDevOPENGL")
 
 add_subdirectory(ENGINE)
@@ -22,3 +22,8 @@ add_executable (GetIntoGameDevOPENGL "GetIntoGameDevOPENGL.cpp" "GetIntoGameDevO
 set_property(TARGET GetIntoGameDevOPENGL PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(GetIntoGameDevOPENGL PRIVATE ENGINE)
+
+# Add PREPROCESSOR MACROS
+target_compile_definitions(GetIntoGameDevOPENGL PRIVATE 
+	RESOURCES_PATH="${CMAKE_SOURCE_DIR}/ASSETS/"
+)
