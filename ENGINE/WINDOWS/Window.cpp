@@ -67,6 +67,11 @@ bool Window::init(const char* title) {
 
     glEnable(GL_DEPTH_TEST);
 
+    // Print OpenGL version info for debugging
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
+    std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+
     //Find the maximum number of texture units the device supports
     GLint units;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &units);

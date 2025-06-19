@@ -25,6 +25,9 @@ int main()
 		std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2");
 	textureKTX2.LoadTX2Texture((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2").c_str());
 
+	TextureKTX2 tex1;
+	tex1.LoadTX2Texture2D((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface2D.ktx2").c_str());
+
 	float vertices[] = {
 		// positions   // uvs
 		-1, -1,        0.0f, 0.0f,
@@ -68,6 +71,8 @@ int main()
 
 	float zoom = 1.0f;
 
+	int layer = 0;
+
 	while (!Window::shouldClose())
 	{
 		Window::clearScreen();
@@ -78,6 +83,16 @@ int main()
 
 		shader.use();
 		shader.setFloat("zoom", zoom);
+
+		static bool wWasPressed = false;
+		bool wIsPressed = glfwGetKey(Window::getGLFWWindow(), GLFW_KEY_W) == GLFW_PRESS;
+
+		if (wIsPressed && !wWasPressed) {
+			layer = (layer + 1) % 4;
+		}
+		wWasPressed = wIsPressed;
+
+		shader.setInt("layer", layer);
 
 		glActiveTexture(GL_TEXTURE0);
 		textureKTX2.Bind();

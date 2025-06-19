@@ -32,11 +32,6 @@ bool TextureKTX2::LoadTX2Texture(const char* filePath)
 		return false;
 	}
 
-	// Print OpenGL version info for debugging
-	std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-	std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
-	std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
-
 	// Check if file exists
 	if (!std::filesystem::exists(filePath))
 	{
@@ -86,6 +81,65 @@ bool TextureKTX2::LoadTX2Texture(const char* filePath)
 
 	return true;
 
+}
+
+bool TextureKTX2::LoadTX2Texture2D(const char* filePath)
+{
+	// Verify OpenGL context is available before proceeding
+	if (!glfwGetCurrentContext())
+	{
+		std::cout << "No OpenGL context available for texture loading" << std::endl;
+		return false;
+	}
+
+	// Check if file exists
+	if (!std::filesystem::exists(filePath))
+	{
+		std::cout << "KTX2 file does not exist: " << filePath << std::endl;
+		return false;
+	}
+
+	ktxTexture2* texture;
+	KTX_error_code result = ktxTexture2_CreateFromNamedFile(
+		filePath,
+		KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+		&texture
+	);
+	if (result != KTX_SUCCESS)
+	{
+		std::cout << "Failed to load KTX2 Texture: " << ktxErrorString(result) << std::endl;
+		return false;
+	}
+
+	if (ktxTexture2_NeedsTranscoding(texture)) {
+		KTX_error_code err = ktxTexture2_TranscodeBasis(
+			texture, KTX_TTF_BC3_RGBA, 0);
+		if (err != KTX_SUCCESS) {
+			std::cout << "Failed to transcode: " << ktxErrorString(err) << std::endl;
+			return false;
+		}
+	}
+
+	// Create an OpenGL texture object
+	glGenTextures(1, &textureID);
+	glBindTexture(target, textureID);
+
+	result = ktxTexture_GLUpload(reinterpret_cast<ktxTexture*>(texture), &textureID, &target, nullptr);
+	if (result != KTX_SUCCESS)
+	{
+		std::cout << "Failed to upload texture to the GPU: " << ktxErrorString(result) << std::endl;
+		ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
+		return false;
+	}
+	ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
+
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	return true;
 }
 
 bool TextureKTX2::ConvertPNGtoKTX2(const std::string& pngSourcePath, const std::string& ktxOutputPath)

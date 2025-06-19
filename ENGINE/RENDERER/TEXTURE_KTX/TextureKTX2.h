@@ -20,6 +20,7 @@ public:
 	void UnBind();
 
 	bool LoadTX2Texture(const char* filePath);
+	bool LoadTX2Texture2D(const char* filePath);
 	bool ConvertPNGtoKTX2(const std::string& pngSourcePath, const std::string& ktxOutputPath);
 private:
 	GLuint textureID;
