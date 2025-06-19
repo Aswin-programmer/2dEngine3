@@ -21,11 +21,11 @@ int main()
 		(std::string(RESOURCES_PATH) + "SHADER/test.frag").c_str());
 
 	TextureKTX2 textureKTX2;
-	textureKTX2.ConvertPNGtoKTX2(std::string(RESOURCES_PATH) + "TEXTURE/PNG/awesomeface.png",
+	textureKTX2.ConvertPNGtoKTX2Texture(std::string(RESOURCES_PATH) + "TEXTURE/PNG/awesomeface.png",
 		std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2");
 	textureKTX2.LoadTX2Texture((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2").c_str());
 
-	TextureKTX2 tex1;
+	TextureKTX2 tex1 = TextureKTX2(GL_TEXTURE_2D_ARRAY);
 	tex1.LoadTX2Texture2D((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface2D.ktx2").c_str());
 
 	float vertices[] = {
@@ -95,7 +95,7 @@ int main()
 		shader.setInt("layer", layer);
 
 		glActiveTexture(GL_TEXTURE0);
-		textureKTX2.Bind();
+		tex1.Bind();
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

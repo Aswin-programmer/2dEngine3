@@ -14,6 +14,7 @@ class TextureKTX2
 {
 public:
 	TextureKTX2();
+	TextureKTX2(GLenum target);
 	~TextureKTX2();
 
 	void Bind();
@@ -21,7 +22,7 @@ public:
 
 	bool LoadTX2Texture(const char* filePath);
 	bool LoadTX2Texture2D(const char* filePath);
-	bool ConvertPNGtoKTX2(const std::string& pngSourcePath, const std::string& ktxOutputPath);
+	bool ConvertPNGtoKTX2Texture(const std::string& pngSourcePath, const std::string& ktxOutputPath);
 private:
 	GLuint textureID;
 	GLenum target;

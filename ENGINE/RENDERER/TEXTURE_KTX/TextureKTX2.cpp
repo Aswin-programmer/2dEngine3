@@ -7,20 +7,27 @@ TextureKTX2::TextureKTX2()
 {
 }
 
+TextureKTX2::TextureKTX2(GLenum target)
+	:
+	textureID{0},
+	target{target}
+{
+}
+
 TextureKTX2::~TextureKTX2()
 {
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(target, 0);
 	glDeleteTextures(1, &textureID);
 }
 
 void TextureKTX2::Bind()
 {
-	glBindTexture(GL_TEXTURE_2D, textureID);
+	glBindTexture(target, textureID);
 }
 
 void TextureKTX2::UnBind()
 {
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(target, 0);
 }
 
 bool TextureKTX2::LoadTX2Texture(const char* filePath)
@@ -78,6 +85,8 @@ bool TextureKTX2::LoadTX2Texture(const char* filePath)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindTexture(target, 0);
 
 	return true;
 
@@ -139,10 +148,12 @@ bool TextureKTX2::LoadTX2Texture2D(const char* filePath)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+	glBindTexture(target, 0);
+
 	return true;
 }
 
-bool TextureKTX2::ConvertPNGtoKTX2(const std::string& pngSourcePath, const std::string& ktxOutputPath)
+bool TextureKTX2::ConvertPNGtoKTX2Texture(const std::string& pngSourcePath, const std::string& ktxOutputPath)
 {
 	// Resolve full paths
 	std::filesystem::path inputPath = std::filesystem::absolute(pngSourcePath);
