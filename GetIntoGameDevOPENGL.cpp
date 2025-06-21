@@ -88,6 +88,7 @@ int main()
 		bool wIsPressed = glfwGetKey(Window::getGLFWWindow(), GLFW_KEY_W) == GLFW_PRESS;
 
 		if (wIsPressed && !wWasPressed) {
+			std::cout << layer << std::endl;
 			layer = (layer + 1) % 4;
 		}
 		wWasPressed = wIsPressed;

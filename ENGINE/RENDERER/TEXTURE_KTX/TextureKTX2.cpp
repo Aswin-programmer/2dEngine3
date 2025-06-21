@@ -80,11 +80,23 @@ bool TextureKTX2::LoadTX2Texture(const char* filePath)
 	}
 	ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
 
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glBindTexture(target, textureID);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	GLint isCompressed;
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
+	if (isCompressed == GL_TRUE) {
+		// Texture is compressed
+		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is compressed!. SAVES MEMORY!." << std::endl;
+	}
+	else
+	{
+		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is not compressed!" << std::endl;
+	}
+
 
 	glBindTexture(target, 0);
 
@@ -142,11 +154,22 @@ bool TextureKTX2::LoadTX2Texture2D(const char* filePath)
 	}
 	ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
 
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glBindTexture(target, textureID);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	GLint isCompressed;
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
+	if (isCompressed == GL_TRUE) {
+		// Texture is compressed
+		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is compressed!. SAVES MEMORY!." << std::endl;
+	}
+	else
+	{
+		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is not compressed!" << std::endl;
+	}
 
 	glBindTexture(target, 0);
 
