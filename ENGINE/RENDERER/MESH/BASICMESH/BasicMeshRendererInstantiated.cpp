@@ -1,4 +1,4 @@
-#include "BasicMeshRenderer.h"
+#include "BasicMeshRendererInstantiated.h"
 
 std::vector<float> CubeVertices = {
 	// Positions          / Texture Coords
@@ -120,7 +120,7 @@ std::vector<unsigned int> PyramidIndices = {
 };
 
 
-BasicMeshRenderer::BasicMeshRenderer()
+BasicMeshRendererInstantiated::BasicMeshRendererInstantiated()
 	:
 	BasicMeshVAO{0},
 	BasicMeshVBO{0},
@@ -135,7 +135,7 @@ BasicMeshRenderer::BasicMeshRenderer()
 	setupBuffers();
 }
 
-BasicMeshRenderer::~BasicMeshRenderer()
+BasicMeshRendererInstantiated::~BasicMeshRendererInstantiated()
 {
 	glDeleteBuffers(1, &BasicMeshVBO);
 	glDeleteBuffers(1, &BasicMeshEBO);
@@ -143,14 +143,14 @@ BasicMeshRenderer::~BasicMeshRenderer()
 	glDeleteVertexArrays(1, &BasicMeshVAO);
 }
 
-void BasicMeshRenderer::setupBuffers()
+void BasicMeshRendererInstantiated::setupBuffers()
 {
 	glCreateVertexArrays(1, &BasicMeshVAO);
 
 	// Vertex Buffer Configuration
 	glCreateBuffers(1, &BasicMeshVBO);
 	
-	glNamedBufferStorage(BasicMeshVBO, sizeof(float) * 20000, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(BasicMeshVBO, sizeof(float) * 4000000, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	glVertexArrayVertexBuffer(BasicMeshVAO, 0, BasicMeshVBO, 0, sizeof(float) * 5);
 
@@ -165,16 +165,16 @@ void BasicMeshRenderer::setupBuffers()
 
 	// Index buffers configuration
 	glCreateBuffers(1, &BasicMeshEBO);
-	glNamedBufferStorage(BasicMeshEBO, sizeof(unsigned int) * 4000, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(BasicMeshEBO, sizeof(unsigned int) * 800000, nullptr, GL_DYNAMIC_STORAGE_BIT);
 	glVertexArrayElementBuffer(BasicMeshVAO, BasicMeshEBO);
 
 	// Mesh Orientation Configuration Using Shader Storage Buffer
 	glCreateBuffers(1, &BasicMeshOrientationSSBO);
-	glNamedBufferStorage(BasicMeshOrientationSSBO, sizeof(MeshOrientation) * 1000, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(BasicMeshOrientationSSBO, sizeof(MeshOrientation) * 20000, nullptr, GL_DYNAMIC_STORAGE_BIT);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, BasicMeshOrientationSSBO);
 }
 
-void BasicMeshRenderer::CleanUp()
+void BasicMeshRendererInstantiated::CleanUp()
 {
 	meshStructureForRendering.clear();
 	meshesOrientation.clear();
@@ -184,7 +184,7 @@ void BasicMeshRenderer::CleanUp()
 	meshIndicesBufferOffset = 0;
 }
 
-void BasicMeshRenderer::AddMesh(std::string meshName, MeshOrientation meshOrientation)
+void BasicMeshRendererInstantiated::AddMesh(std::string meshName, MeshOrientation meshOrientation)
 {
 	auto itr = meshStructureForRendering.find(meshName);
 	if (itr == meshStructureForRendering.end())
@@ -201,27 +201,13 @@ void BasicMeshRenderer::AddMesh(std::string meshName, MeshOrientation meshOrient
 		if (meshName == "CUBE")
 		{
 			meshVertices.insert(meshVertices.end(), CubeVertices.begin(), CubeVertices.end());
-
-			std::vector<unsigned int> adjustedIndices(CubeIndices.size());
-			for (int i = 0; i < adjustedIndices.size(); i++)
-			{
-				adjustedIndices[i] = CubeIndices[i] + meshIndicesBufferOffset;
-			}
-
-			meshIndices.insert(meshIndices.end(), adjustedIndices.begin(), adjustedIndices.end());
+			meshIndices.insert(meshIndices.end(), CubeIndices.begin(), CubeIndices.end());
 			meshStructureForRendering[meshName].meshSize = CubeIndices.size();
 		}
 		else if (meshName == "PYRAMID")
 		{
 			meshVertices.insert(meshVertices.end(), PyramidVertices.begin(), PyramidVertices.end());
-
-			std::vector<unsigned int> adjustedIndices(PyramidIndices.size());
-			for (int i = 0; i < adjustedIndices.size(); i++)
-			{
-				adjustedIndices[i] = PyramidIndices[i] + meshIndicesBufferOffset;
-			}
-
-			meshIndices.insert(meshIndices.end(), adjustedIndices.begin(), adjustedIndices.end());
+			meshIndices.insert(meshIndices.end(), PyramidIndices.begin(), PyramidIndices.end());
 			meshStructureForRendering[meshName].meshSize = PyramidIndices.size();
 		}
 
@@ -239,7 +225,7 @@ void BasicMeshRenderer::AddMesh(std::string meshName, MeshOrientation meshOrient
 
 }
 
-void BasicMeshRenderer::Render()
+void BasicMeshRendererInstantiated::Render()
 {
 	glBindVertexArray(BasicMeshVAO); 
 
@@ -263,9 +249,9 @@ void BasicMeshRenderer::Render()
 			, meshesOrientation[mesh.second.meshName].data());
 
 		// Draw commmands to render the mesh
-		glDrawElementsInstanced(GL_TRIANGLES, mesh.second.meshSize, GL_UNSIGNED_INT
+		glDrawElementsInstancedBaseVertex(GL_TRIANGLES, mesh.second.meshSize, GL_UNSIGNED_INT
 			, (void*)(mesh.second.meshIndexBufferOffset * sizeof(unsigned int))
-			, mesh.second.meshInstances);
+			, mesh.second.meshInstances, mesh.second.meshIndexBufferOffset);
 	}
 	
 }

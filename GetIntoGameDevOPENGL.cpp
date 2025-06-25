@@ -36,7 +36,7 @@ int main()
 	shader.use();
 	shader.setInt("u_Diffuse", 0);
 
-	BasicMeshRenderer meshRenderer = BasicMeshRenderer();
+	BasicMeshRendererInstantiated meshRenderer = BasicMeshRendererInstantiated();
 
 	double time = 0;
 
@@ -65,9 +65,9 @@ int main()
 
 		meshRenderer.CleanUp();
 
-		for (int i = -5; i < 5; i++)
+		for (int i = -50; i < 50; i++)
 		{
-			for (int j = -5; j < 5; j++)
+			for (int j = -50; j < 50; j++)
 			{
 				meshRenderer.AddMesh("CUBE", MeshOrientation(
 					glm::vec3(i, j, 0.f),

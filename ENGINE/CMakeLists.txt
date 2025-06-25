@@ -32,14 +32,14 @@ add_library (ENGINE
 	"CAMERA/Camera.cpp" 
 	"RENDERER/TEXTURE_KTX/TextureLoader.h" 
 	"RENDERER/TEXTURE_KTX/TextureLoader.cpp" 
-	"RENDERER/MESH/BASICMESH/BasicMeshRenderer.h"
-	"RENDERER/MESH/BASICMESH/BasicMeshRenderer.cpp"
+	"RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h"
+	"RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.cpp"
 )
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
 target_include_directories(ENGINE PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
+ 
 target_link_libraries(ENGINE PUBLIC 
 	glfw 
 	glad 

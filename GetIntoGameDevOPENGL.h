@@ -10,5 +10,5 @@
 #include <WINDOWS/Window.h>
 #include <RENDERER/TEXTURE_KTX/TextureKTX2.h>
 #include <RENDERER/SHADERS/Shader.h>
-#include <RENDERER/MESH/BASICMESH/BasicMeshRenderer.h>
+#include <RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h>
 #include <CAMERA/Camera.h>

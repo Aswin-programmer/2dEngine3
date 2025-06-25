@@ -42,11 +42,11 @@ struct MeshOrientation
 };
 
 
-class BasicMeshRenderer
+class BasicMeshRendererInstantiated  
 {
 public:
-	BasicMeshRenderer();
-	~BasicMeshRenderer();
+	BasicMeshRendererInstantiated();
+	~BasicMeshRendererInstantiated();
 
 	void AddMesh(std::string meshName, MeshOrientation meshOrientation);
 
