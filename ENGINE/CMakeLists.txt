@@ -26,7 +26,15 @@ add_library (ENGINE
 	"UTILITIES/Time.cpp" 
 	"RENDERER/TEXTURE_KTX/TextureKTX2.h"
 	"RENDERER/TEXTURE_KTX/TextureKTX2.cpp"
-	 "RENDERER/SHADERS/Shader.h" "RENDERER/SHADERS/Shader.cpp")
+	"RENDERER/SHADERS/Shader.h" 
+	"RENDERER/SHADERS/Shader.cpp" 
+	"CAMERA/Camera.h" 
+	"CAMERA/Camera.cpp" 
+	"RENDERER/TEXTURE_KTX/TextureLoader.h" 
+	"RENDERER/TEXTURE_KTX/TextureLoader.cpp" 
+	"RENDERER/MESH/BASICMESH/BasicMeshRenderer.h"
+	"RENDERER/MESH/BASICMESH/BasicMeshRenderer.cpp"
+)
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 

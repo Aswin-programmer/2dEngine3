@@ -3,12 +3,21 @@
 
 // Force NVIDIA GPU
 extern "C" {
+
 	__declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
 }
 
 #include "GetIntoGameDevOPENGL.h"
 
-using namespace std;
+// Opengl Callbacks
+void processKeyInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+// Camera Setup
+Camera camera(glm::vec3(0.f, 0.f, 3.f));
+float lastX = 640.f / 2.f;
+float lastY = 480.f / 2.f;
 
 int main()
 {
@@ -17,91 +26,111 @@ int main()
 
 	Window::init("TESTING");
 
-	Shader shader((std::string(RESOURCES_PATH) + "SHADER/test.vert").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/test.frag").c_str());
+	glfwSetCursorPosCallback(Window::getGLFWWindow(), mouse_callback);
+	glfwSetScrollCallback(Window::getGLFWWindow(), scroll_callback);
 
-	TextureKTX2 textureKTX2;
-	textureKTX2.ConvertPNGtoKTX2Texture(std::string(RESOURCES_PATH) + "TEXTURE/PNG/awesomeface.png",
-		std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2");
-	textureKTX2.LoadTX2Texture((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface.ktx2").c_str());
+	Shader shader = Shader((std::string(RESOURCES_PATH) + "SHADER/cube.vert").c_str()
+		, (std::string(RESOURCES_PATH) + "SHADER/cube.frag").c_str());
 
-	TextureKTX2 tex1 = TextureKTX2(GL_TEXTURE_2D_ARRAY);
-	tex1.LoadTX2Texture2D((std::string(RESOURCES_PATH) + "TEXTURE/KTX/awesomeface2D.ktx2").c_str());
-
-	float vertices[] = {
-		// positions   // uvs
-		-1, -1,        0.0f, 0.0f,
-		 1, -1,        1.0f, 0.0f,
-		 1,  1,        1.0f, 1.0f,
-		-1,  1,        0.0f, 1.0f,
-	};
-	GLuint indices[] = { 0, 1, 2, 2, 3, 0 };
-
-	GLuint VAO, VBO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	// Bind VAO
-	glBindVertexArray(VAO);
-
-	// Bind and upload vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// Bind and upload index data
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// Vertex position attribute
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
-	// Vertex UV attribute
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	// Unbind to prevent accidental changes (optional, but good practice)
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	TextureKTX2 textureKTX2 = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/cube.ktx2").c_str());
 	shader.use();
-	glActiveTexture(GL_TEXTURE0);
-	shader.setInt("tex", 0);
+	shader.setInt("u_Diffuse", 0);
 
-	float zoom = 1.0f;
+	BasicMeshRenderer meshRenderer = BasicMeshRenderer();
 
-	int layer = 0;
+	double time = 0;
 
 	while (!Window::shouldClose())
 	{
+		time = glfwGetTime();
+
 		Window::clearScreen();
 		Window::processInput();
 
-		if (glfwGetKey(Window::getGLFWWindow(), GLFW_KEY_UP) == GLFW_PRESS) zoom *= 1.01f;
-		if (glfwGetKey(Window::getGLFWWindow(), GLFW_KEY_DOWN) == GLFW_PRESS) zoom /= 1.01f;
+		processKeyInput(Window::getGLFWWindow());
 
 		shader.use();
-		shader.setFloat("zoom", zoom);
-
-		static bool wWasPressed = false;
-		bool wIsPressed = glfwGetKey(Window::getGLFWWindow(), GLFW_KEY_W) == GLFW_PRESS;
-
-		if (wIsPressed && !wWasPressed) {
-			std::cout << layer << std::endl;
-			layer = (layer + 1) % 4;
-		}
-		wWasPressed = wIsPressed;
-
-		shader.setInt("layer", layer);
 
 		glActiveTexture(GL_TEXTURE0);
-		tex1.Bind();
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		textureKTX2.Bind();
+
+		// Create projection matrices
+		glm::mat4 projection = glm::mat4(1.0f);
+		projection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
+		shader.setMat4("projection", projection);
+
+		// Camera or View transformation
+		glm::mat4 view = camera.GetViewMatrix();
+		shader.setMat4("view", view);
+
+		meshRenderer.CleanUp();
+
+		for (int i = -5; i < 5; i++)
+		{
+			for (int j = -5; j < 5; j++)
+			{
+				meshRenderer.AddMesh("CUBE", MeshOrientation(
+					glm::vec3(i, j, 0.f),
+					glm::vec3(0.f, 0.f, fmod(time, 360)),
+					glm::vec3(0.5f, 0.5f, 0.5f)
+				));
+
+				meshRenderer.AddMesh("PYRAMID", MeshOrientation(
+					glm::vec3(i, j, 1.f),
+					glm::vec3(0.f, fmod(time, 360), fmod(time, 360)),
+					glm::vec3(0.5f, 0.5f, 0.5f)
+				));
+			}
+		}
+
+		meshRenderer.Render();
 
 		Window::update();
 	}
 	Window::cleanup();
 	return 0;
+}
+
+void processKeyInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, true);
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(FORWARD, Window::getdt());
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(BACKWARD, Window::getdt());
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(LEFT, Window::getdt());
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		camera.ProcessKeyboard(RIGHT, Window::getdt());
+	}
+}
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+	float xpos = static_cast<float>(xposIn);
+	float ypos = static_cast<float>(yposIn);
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }

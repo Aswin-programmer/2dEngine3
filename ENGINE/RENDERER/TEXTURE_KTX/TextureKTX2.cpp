@@ -1,17 +1,23 @@
 #include "TextureKTX2.h"
+#include "TextureKTX2.h"
+#include "TextureKTX2.h"
 
-TextureKTX2::TextureKTX2()
+TextureKTX2::TextureKTX2(std::string filepath)
 	:
 	textureID{0},
 	target{GL_TEXTURE_2D}
 {
+	//LoadTX2Texture(ConvertPNG2KTG2(filepath).c_str());
+	LoadTX2Texture(filepath.c_str());
 }
 
-TextureKTX2::TextureKTX2(GLenum target)
+TextureKTX2::TextureKTX2(std::string filepath, GLenum target)
 	:
 	textureID{0},
 	target{target}
 {
+	//LoadTX2Texture(ConvertPNG2KTG2(filepath).c_str());
+	LoadTX2Texture(filepath.c_str());
 }
 
 TextureKTX2::~TextureKTX2()
@@ -231,4 +237,26 @@ bool TextureKTX2::ConvertPNGtoKTX2Texture(const std::string& pngSourcePath, cons
 	}
 
 	return true;
+}
+
+std::string TextureKTX2::ConvertPNG2KTG2(const std::string& pngPath)
+{
+	std::string ktxPath = pngPath;
+
+	// Replace "png" to "ktx2"
+	size_t folderPos = ktxPath.find("\\PNG\\");
+	if (folderPos != std::string::npos)
+	{
+		ktxPath.replace(folderPos, 5, "\\KTX\\");
+	}
+
+	// Replace ".png" with ".ktx2"
+	size_t extPos = ktxPath.rfind(".png");
+	if (extPos != std::string::npos)
+	{
+		ktxPath.replace(extPos, 4, ".ktx2");
+	}
+
+	return ktxPath;
+
 }
