@@ -211,7 +211,7 @@ void BasicMeshRendererInstantiated::AddMesh(std::string meshName, MeshOrientatio
 			meshStructureForRendering[meshName].meshSize = PyramidIndices.size();
 		}
 
-		meshVerticesBufferOffset = meshVertices.size();
+		meshVerticesBufferOffset = meshVertices.size() / 5;
 		meshIndicesBufferOffset = meshIndices.size();
 
 		meshesOrientation[meshName].push_back(meshOrientation);
@@ -251,7 +251,7 @@ void BasicMeshRendererInstantiated::Render()
 		// Draw commmands to render the mesh
 		glDrawElementsInstancedBaseVertex(GL_TRIANGLES, mesh.second.meshSize, GL_UNSIGNED_INT
 			, (void*)(mesh.second.meshIndexBufferOffset * sizeof(unsigned int))
-			, mesh.second.meshInstances, mesh.second.meshIndexBufferOffset);
+			, mesh.second.meshInstances, mesh.second.meshVertexBufferOffset);
 	}
 	
 }
