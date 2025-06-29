@@ -1,4 +1,4 @@
-#version 450 core
+#version 460 core
 
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec2 aTexCoord;
@@ -80,7 +80,7 @@ mat4 composeTransform(MeshOrientation m) {
 void main()
 {
     uint instanceID = gl_InstanceID;
-    MeshOrientation orientation = meshOrientations[instanceID];
+    MeshOrientation orientation = meshOrientations[instanceID + gl_BaseInstance];
     mat4 model = composeTransform(orientation);
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);
