@@ -17,7 +17,7 @@ public:
 	TextureKTX2(std::string filepath, GLenum target);
 	~TextureKTX2();
 
-	void Bind();
+	void Bind(int texture_unit);
 	void UnBind();
 
 	bool LoadTX2Texture(const char* filePath);

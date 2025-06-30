@@ -38,7 +38,33 @@ int main()
 
 	BasicMeshRendererInstantiated meshRenderer = BasicMeshRendererInstantiated();
 
+	Shader shader2 = Shader(
+		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/vert.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/frag.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/tess_ctrl.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/tess_eval.glsl").c_str()
+	);
+
 	double time = 0;
+
+	float quadVerts[] = {
+	-0.5f, -0.5f, // 0 - Bottom Left
+	 0.5f, -0.5f, // 1 - Bottom Right
+	 0.5f,  0.5f, // 2 - Top Right
+	-0.5f,  0.5f  // 3 - Top Left
+	};
+
+	GLuint vao, vbo;
+	glCreateVertexArrays(1, &vao);
+
+	glCreateBuffers(1, &vbo);
+	glNamedBufferStorage(vbo, sizeof(float) * (sizeof(quadVerts) / sizeof(float)), &quadVerts, GL_DYNAMIC_STORAGE_BIT);
+	
+	glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(float) * 2);
+
+	glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao, 0, 0);
+	glEnableVertexArrayAttrib(vao, 0);
 
 	while (!Window::shouldClose())
 	{
@@ -51,8 +77,7 @@ int main()
 
 		shader.use();
 
-		glActiveTexture(GL_TEXTURE0);
-		textureKTX2.Bind();
+		textureKTX2.Bind(0);
 
 		// Create projection matrices
 		glm::mat4 projection = glm::mat4(1.0f);
@@ -63,7 +88,7 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.setMat4("view", view);
 
-		meshRenderer.CleanUp();
+		/*meshRenderer.CleanUp();
 
 		for (int i = -50; i < 50; i++)
 		{
@@ -83,7 +108,14 @@ int main()
 			}
 		}
 
-		meshRenderer.Render();
+		meshRenderer.Render();*/
+
+		shader2.use();
+		glBindVertexArray(vao);
+		glPatchParameteri(GL_PATCH_VERTICES, 4);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDrawArrays(GL_PATCHES, 0, 4);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		Window::update();
 	}

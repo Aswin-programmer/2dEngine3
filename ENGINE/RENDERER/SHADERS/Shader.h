@@ -12,7 +12,9 @@
 class Shader
 {
 public:
-	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* vertexPath, const char* fragmentPath,
+		const char* tessControlPath = nullptr,
+		const char* tessEvalPath = nullptr);
 	void use();
 	void unuse();
 	void setBool(const std::string& name, bool value) const;

@@ -231,10 +231,6 @@ void BasicMeshRendererInstantiated::Render()
 
     glBindVertexArray(BasicMeshVAO);
 
-    // Clear per-frame data
-    meshesOrientation.clear();
-    indirectCommandBuffer.clear();
-
     if (IsBuffersUpdateRequired)
     {
         // Upload the vertex buffer

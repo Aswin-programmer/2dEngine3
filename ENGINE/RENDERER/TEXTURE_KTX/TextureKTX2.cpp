@@ -26,88 +26,85 @@ TextureKTX2::~TextureKTX2()
 	glDeleteTextures(1, &textureID);
 }
 
-void TextureKTX2::Bind()
+void TextureKTX2::Bind(int texture_unit)
 {
-	glBindTexture(target, textureID);
+	glBindTextureUnit(texture_unit, textureID);
 }
 
 void TextureKTX2::UnBind()
 {
-	glBindTexture(target, 0);
+	glBindTextureUnit(0, textureID);
 }
 
 bool TextureKTX2::LoadTX2Texture(const char* filePath)
 {
-	// Verify OpenGL context is available before proceeding
-	if (!glfwGetCurrentContext())
-	{
+	// 1. Check for valid OpenGL context
+	if (!glfwGetCurrentContext()) {
 		std::cout << "No OpenGL context available for texture loading" << std::endl;
 		return false;
 	}
 
-	// Check if file exists
-	if (!std::filesystem::exists(filePath))
-	{
+	// 2. Check file exists
+	if (!std::filesystem::exists(filePath)) {
 		std::cout << "KTX2 file does not exist: " << filePath << std::endl;
 		return false;
 	}
 
+	// 3. Load texture from file
 	ktxTexture2* texture;
 	KTX_error_code result = ktxTexture2_CreateFromNamedFile(
 		filePath,
 		KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
 		&texture
 	);
-	if (result != KTX_SUCCESS)
-	{
+
+	if (result != KTX_SUCCESS) {
 		std::cout << "Failed to load KTX2 Texture: " << ktxErrorString(result) << std::endl;
 		return false;
 	}
 
+	// 4. Transcode if needed
 	if (ktxTexture2_NeedsTranscoding(texture)) {
 		KTX_error_code err = ktxTexture2_TranscodeBasis(
-			texture, KTX_TTF_BC3_RGBA, 0);
+			texture,
+			KTX_TTF_BC3_RGBA, // BC3 (DXT5) is widely supported
+			0
+		);
 		if (err != KTX_SUCCESS) {
 			std::cout << "Failed to transcode: " << ktxErrorString(err) << std::endl;
+			ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
 			return false;
 		}
 	}
 
-	// Create an OpenGL texture object
-	glGenTextures(1, &textureID);
-	glBindTexture(target, textureID);
-
+	// 5. Upload texture to GPU (will generate texture object)
 	result = ktxTexture_GLUpload(reinterpret_cast<ktxTexture*>(texture), &textureID, &target, nullptr);
-	if (result != KTX_SUCCESS)
-	{
-		std::cout << "Failed to upload texture to the GPU: " << ktxErrorString(result) << std::endl;
+	if (result != KTX_SUCCESS) {
+		std::cout << "Failed to upload texture to GPU: " << ktxErrorString(result) << std::endl;
 		ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
 		return false;
 	}
+
+	// 6. Destroy CPU-side KTX texture
 	ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
 
-	glBindTexture(target, textureID);
-	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// 7. Set texture parameters with DSA
+	glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	GLint isCompressed;
-	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
+	// 8. Optional: Check if texture is compressed (DSA)
+	GLint isCompressed = 0;
+	glGetTextureLevelParameteriv(textureID, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
 	if (isCompressed == GL_TRUE) {
-		// Texture is compressed
-		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is compressed!. SAVES MEMORY!." << std::endl;
+		std::cout << "The texture with ID: {" << textureID << "} is compressed! Saves memory." << std::endl;
 	}
-	else
-	{
-		std::cout << "The texture with ID: " << "{" << textureID << "}" << " is not compressed!" << std::endl;
+	else {
+		std::cout << "The texture with ID: {" << textureID << "} is not compressed!" << std::endl;
 	}
-
-
-	glBindTexture(target, 0);
 
 	return true;
-
 }
 
 bool TextureKTX2::LoadTX2Texture2D(const char* filePath)
