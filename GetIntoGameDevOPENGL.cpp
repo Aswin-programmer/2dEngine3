@@ -39,32 +39,19 @@ int main()
 	BasicMeshRendererInstantiated meshRenderer = BasicMeshRendererInstantiated();
 
 	Shader shader2 = Shader(
-		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/vert.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/frag.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/tess_ctrl.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TESS_TEST/tess_eval.glsl").c_str()
+		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/vert.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/frag.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/tess_ctrl.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/tess_eval.glsl").c_str()
 	);
 
-	double time = 0;
+	TextureKTX2 terrain_height_map = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/terrain_height_map.ktx2").c_str());
+	TextureKTX2 terrain_texture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/terrain2.ktx2").c_str());
 
-	float quadVerts[] = {
-	-0.5f, -0.5f, // 0 - Bottom Left
-	 0.5f, -0.5f, // 1 - Bottom Right
-	 0.5f,  0.5f, // 2 - Top Right
-	-0.5f,  0.5f  // 3 - Top Left
-	};
-
-	GLuint vao, vbo;
+	GLuint vao;
 	glCreateVertexArrays(1, &vao);
 
-	glCreateBuffers(1, &vbo);
-	glNamedBufferStorage(vbo, sizeof(float) * (sizeof(quadVerts) / sizeof(float)), &quadVerts, GL_DYNAMIC_STORAGE_BIT);
-	
-	glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(float) * 2);
-
-	glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vao, 0, 0);
-	glEnableVertexArrayAttrib(vao, 0);
+	double time = 0;
 
 	while (!Window::shouldClose())
 	{
@@ -75,47 +62,33 @@ int main()
 
 		processKeyInput(Window::getGLFWWindow());
 
-		shader.use();
+		glBindVertexArray(vao);
 
-		textureKTX2.Bind(0);
+		terrain_height_map.Bind(0);
+		terrain_texture.Bind(1);
+
+		shader2.use();
+
+		shader2.setFloat("dmap_depth", 5.0f);
+		shader2.setInt("tex_displacement", 0);
+		shader2.setInt("tex_color", 1);
 
 		// Create projection matrices
 		glm::mat4 projection = glm::mat4(1.0f);
 		projection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
-		shader.setMat4("projection", projection);
+		shader2.setMat4("projection", projection);
 
 		// Camera or View transformation
 		glm::mat4 view = camera.GetViewMatrix();
-		shader.setMat4("view", view);
+		shader2.setMat4("view", view);
 
-		/*meshRenderer.CleanUp();
+		// Model matrix
+		glm::mat4 model = glm::mat4{ 1.f };
+		//glm::translate(model, glm::vec3(0.f, -15.f, 0.f));
+		shader2.setMat4("model", model);
 
-		for (int i = -50; i < 50; i++)
-		{
-			for (int j = -50; j < 50; j++)
-			{
-				meshRenderer.AddMesh("CUBE", MeshOrientation(
-					glm::vec3(i, j, 0.f),
-					glm::vec3(0.f, 0.f, fmod(time, 360)),
-					glm::vec3(0.5f, 0.5f, 0.5f)
-				));
-
-				meshRenderer.AddMesh("PYRAMID", MeshOrientation(
-					glm::vec3(i, j, 1.f),
-					glm::vec3(0.f, fmod(time, 360), fmod(time, 360)),
-					glm::vec3(0.5f, 0.5f, 0.5f)
-				));
-			}
-		}
-
-		meshRenderer.Render();*/
-
-		shader2.use();
-		glBindVertexArray(vao);
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawArrays(GL_PATCHES, 0, 4);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawArraysInstanced(GL_PATCHES, 0, 4, 64 * 64);
 
 		Window::update();
 	}
