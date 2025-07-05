@@ -15,9 +15,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Camera Setup
-Camera camera(glm::vec3(0.f, 0.f, 3.f));
+Camera camera(glm::vec3(0.f, 0.f, 0.f));
 float lastX = 640.f / 2.f;
 float lastY = 480.f / 2.f;
+
+// Mouse Setup
+float GlobalMousePosX = 0.f;
+float GlobalMousePosY = 0.f;
 
 int main()
 {
@@ -45,11 +49,14 @@ int main()
 		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/tess_eval.glsl").c_str()
 	);
 
-	TextureKTX2 terrain_height_map = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/terrain_height_map.ktx2").c_str());
-	TextureKTX2 terrain_texture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/terrain2.ktx2").c_str());
+	Shader shader3 = Shader(
+		(std::string(RESOURCES_PATH) + "SHADER/BEZIER_CURVE/bezier.vert").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/BEZIER_CURVE/bezier.frag").c_str()
+	);
 
-	GLuint vao;
-	glCreateVertexArrays(1, &vao);
+
+
+	BezierCurveRenderer bezierCurveRenderer = BezierCurveRenderer();
 
 	double time = 0;
 
@@ -62,33 +69,33 @@ int main()
 
 		processKeyInput(Window::getGLFWWindow());
 
-		glBindVertexArray(vao);
+		shader3.use();
 
-		terrain_height_map.Bind(0);
-		terrain_texture.Bind(1);
+		//// Create projection matrices [PERSPECTIVE]
+		//glm::mat4 projectionP = glm::mat4(1.0f);
+		//projectionP = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
+		//shader2.setMat4("projection", projectionP);
 
-		shader2.use();
-
-		shader2.setFloat("dmap_depth", 5.0f);
-		shader2.setInt("tex_displacement", 0);
-		shader2.setInt("tex_color", 1);
-
-		// Create projection matrices
-		glm::mat4 projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
-		shader2.setMat4("projection", projection);
+		// Create projection matrix [ORTHO]
+		glm::mat4 projectionO = glm::mat4(1.0f);
+		projectionO = glm::ortho(0.0f, 640.0f, 0.0f, 480.0f, -1.0f, 1.0f);
+		shader3.setMat4("projection", projectionO);
 
 		// Camera or View transformation
 		glm::mat4 view = camera.GetViewMatrix();
-		shader2.setMat4("view", view);
+		shader3.setMat4("view", view);
 
 		// Model matrix
 		glm::mat4 model = glm::mat4{ 1.f };
 		//glm::translate(model, glm::vec3(0.f, -15.f, 0.f));
-		shader2.setMat4("model", model);
+		shader3.setMat4("model", model);
 
-		glPatchParameteri(GL_PATCH_VERTICES, 4);
-		glDrawArraysInstanced(GL_PATCHES, 0, 4, 64 * 64);
+		bezierCurveRenderer.Clear();
+		bezierCurveRenderer.Prepare(BezierCurvePoint(100, 100),
+			BezierCurvePoint(GlobalMousePosX, GlobalMousePosY),  // curve control point
+			BezierCurvePoint(400, 100)); // ends lower
+
+		bezierCurveRenderer.Render();
 
 		Window::update();
 	}
@@ -125,6 +132,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
 	float xpos = static_cast<float>(xposIn);
 	float ypos = static_cast<float>(yposIn);
+
+	GlobalMousePosX = xpos;
+	GlobalMousePosY = 480.f - ypos;
+
+	std::cout << "The mouse position is: " << xpos << " and " << 480.f - ypos << "." << std::endl;
 
 	float xoffset = xpos - lastX;
 	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top

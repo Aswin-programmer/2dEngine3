@@ -34,7 +34,7 @@ add_library (ENGINE
 	"RENDERER/TEXTURE_KTX/TextureLoader.cpp" 
 	"RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h"
 	"RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.cpp"
-)
+ "RENDERER/BEZIERS_CURVE/BezierCurveRenderer.h" "RENDERER/BEZIERS_CURVE/BezierCurveRenderer.cpp")
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
