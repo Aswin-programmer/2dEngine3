@@ -8,7 +8,7 @@ GLFWwindow* Window::m_window = nullptr;
 float Window::beginTime = 0.0f;
 float Window::endTime = 0.0f;
 float Window::dt = 0.0f;
-float Window::r = 1.0f;
+float Window::r = 0.0f;
 float Window::g = 0.0f;
 float Window::b = 0.0f;
 float Window::a = 1.0f;
@@ -66,6 +66,9 @@ bool Window::init(const char* title) {
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
 
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_POINT_SPRITE);
 
     // Print OpenGL version info for debugging
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;

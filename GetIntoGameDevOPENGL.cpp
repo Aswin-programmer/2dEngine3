@@ -37,26 +37,21 @@ int main()
 		, (std::string(RESOURCES_PATH) + "SHADER/cube.frag").c_str());
 
 	TextureKTX2 textureKTX2 = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/cube.ktx2").c_str());
-	shader.use();
-	shader.setInt("u_Diffuse", 0);
-
-	BasicMeshRendererInstantiated meshRenderer = BasicMeshRendererInstantiated();
 
 	Shader shader2 = Shader(
-		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/vert.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/frag.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/tess_ctrl.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/TERRAIN_TEST/tess_eval.glsl").c_str()
+		(std::string(RESOURCES_PATH) + "SHADER/GEO_TEST/geo_vert.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/GEO_TEST/geo_frag.glsl").c_str(),
+		nullptr,
+		nullptr,
+		(std::string(RESOURCES_PATH) + "SHADER/GEO_TEST/geo_geo.glsl").c_str()
 	);
 
 	Shader shader3 = Shader(
-		(std::string(RESOURCES_PATH) + "SHADER/BEZIER_CURVE/bezier.vert").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/BEZIER_CURVE/bezier.frag").c_str()
+		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/particle_vert.glsl").c_str(),
+		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/particle_frag.glsl").c_str()
 	);
 
-
-
-	BezierCurveRenderer bezierCurveRenderer = BezierCurveRenderer();
+	ParticleSystemRenderer particleSystemRenderer = ParticleSystemRenderer();
 
 	double time = 0;
 
@@ -71,15 +66,15 @@ int main()
 
 		shader3.use();
 
-		//// Create projection matrices [PERSPECTIVE]
-		//glm::mat4 projectionP = glm::mat4(1.0f);
-		//projectionP = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
-		//shader2.setMat4("projection", projectionP);
+		// Create projection matrices [PERSPECTIVE]
+		glm::mat4 projectionP = glm::mat4(1.0f);
+		projectionP = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
+		shader3.setMat4("projection", projectionP);
 
-		// Create projection matrix [ORTHO]
-		glm::mat4 projectionO = glm::mat4(1.0f);
-		projectionO = glm::ortho(0.0f, 640.0f, 0.0f, 480.0f, -1.0f, 1.0f);
-		shader3.setMat4("projection", projectionO);
+		//// Create projection matrix [ORTHO]
+		//glm::mat4 projectionO = glm::mat4(1.0f);
+		//projectionO = glm::ortho(0.0f, 640.0f, 0.0f, 480.0f, -1.0f, 1.0f);
+		//shader3.setMat4("projection", projectionO);
 
 		// Camera or View transformation
 		glm::mat4 view = camera.GetViewMatrix();
@@ -90,12 +85,9 @@ int main()
 		//glm::translate(model, glm::vec3(0.f, -15.f, 0.f));
 		shader3.setMat4("model", model);
 
-		bezierCurveRenderer.Clear();
-		bezierCurveRenderer.Prepare(BezierCurvePoint(100, 100),
-			BezierCurvePoint(GlobalMousePosX, GlobalMousePosY),  // curve control point
-			BezierCurvePoint(400, 100)); // ends lower
-
-		bezierCurveRenderer.Render();
+		//particleSystemRenderer.CleanUp();
+		particleSystemRenderer.RefreshParticles(Window::getdt());
+		particleSystemRenderer.Render();
 
 		Window::update();
 	}

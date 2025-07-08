@@ -1,15 +1,21 @@
 #include "Shader.h"
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath,
-    const char* tessControlPath, const char* tessEvalPath)
+Shader::Shader(
+    const char* vertexPath, 
+    const char* fragmentPath,
+    const char* tessControlPath, 
+    const char* tessEvalPath,
+    const char* geometryPath
+)
 {
-    std::string vertexCode, fragmentCode, tessControlCode, tessEvalCode;
-    std::ifstream vShaderFile, fShaderFile, tcShaderFile, teShaderFile;
+    std::string vertexCode, fragmentCode, tessControlCode, tessEvalCode, geometryCode;
+    std::ifstream vShaderFile, fShaderFile, tcShaderFile, teShaderFile, gShaderFile;
 
     vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     tcShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     teShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try {
         // Vertex Shader
@@ -44,6 +50,15 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath,
             teShaderFile.close();
         }
 
+        // Geometry Shader (optional)
+        if (geometryPath) {
+            gShaderFile.open(geometryPath);
+            std::stringstream gShaderStream;
+            gShaderStream << gShaderFile.rdbuf();
+            geometryCode = gShaderStream.str();
+            gShaderFile.close();
+        }
+
     }
     catch (std::ifstream::failure& e) {
         std::cerr << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
@@ -52,19 +67,21 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath,
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
 
-    // Compile shaders
-    unsigned int vertex, fragment, tessControl = 0, tessEval = 0;
+    unsigned int vertex, fragment, tessControl = 0, tessEval = 0, geometry = 0;
 
+    // Compile Vertex
     vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vShaderCode, nullptr);
     glCompileShader(vertex);
     checkCompileErrors(vertex, "VERTEX");
 
+    // Compile Fragment
     fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fShaderCode, nullptr);
     glCompileShader(fragment);
     checkCompileErrors(fragment, "FRAGMENT");
 
+    // Compile Tessellation Control (optional)
     if (!tessControlCode.empty()) {
         const char* tcShaderCode = tessControlCode.c_str();
         tessControl = glCreateShader(GL_TESS_CONTROL_SHADER);
@@ -73,6 +90,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath,
         checkCompileErrors(tessControl, "TESS_CONTROL");
     }
 
+    // Compile Tessellation Eval (optional)
     if (!tessEvalCode.empty()) {
         const char* teShaderCode = tessEvalCode.c_str();
         tessEval = glCreateShader(GL_TESS_EVALUATION_SHADER);
@@ -81,11 +99,21 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath,
         checkCompileErrors(tessEval, "TESS_EVALUATION");
     }
 
-    // Link program
+    // Compile Geometry Shader (optional)
+    if (!geometryCode.empty()) {
+        const char* gShaderCode = geometryCode.c_str();
+        geometry = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometry, 1, &gShaderCode, nullptr);
+        glCompileShader(geometry);
+        checkCompileErrors(geometry, "GEOMETRY");
+    }
+
+    // Link Program
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     if (tessControl) glAttachShader(ID, tessControl);
     if (tessEval)    glAttachShader(ID, tessEval);
+    if (geometry)    glAttachShader(ID, geometry);
     glAttachShader(ID, fragment);
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
@@ -95,6 +123,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath,
     glDeleteShader(fragment);
     if (tessControl) glDeleteShader(tessControl);
     if (tessEval)    glDeleteShader(tessEval);
+    if (geometry)    glDeleteShader(geometry);
 }
 
 void Shader::use()

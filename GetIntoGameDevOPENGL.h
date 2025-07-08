@@ -12,4 +12,5 @@
 #include <RENDERER/SHADERS/Shader.h>
 #include <RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h>
 #include <RENDERER/BEZIERS_CURVE/BezierCurveRenderer.h>
+#include <RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.h>
 #include <CAMERA/Camera.h>
