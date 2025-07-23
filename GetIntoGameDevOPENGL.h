@@ -14,3 +14,4 @@
 #include <RENDERER/BEZIERS_CURVE/BezierCurveRenderer.h>
 #include <RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.h>
 #include <CAMERA/Camera.h>
+#include <CAMERA/EditorCamera.h>

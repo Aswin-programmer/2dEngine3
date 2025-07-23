@@ -14,10 +14,13 @@ void processKeyInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Camera Setup
-Camera camera(glm::vec3(0.f, 0.f, 0.f));
-float lastX = 640.f / 2.f;
-float lastY = 480.f / 2.f;
+//// Camera Setup
+//Camera camera(glm::vec3(0.f, 0.f, 0.f));
+//float lastX = 640.f / 2.f;
+//float lastY = 480.f / 2.f;
+
+// Editor Camera Setup
+EditorCamera camera(45.0f, 640.f / 480.f, 0.1f, 200.0f);
 
 // Mouse Setup
 float GlobalMousePosX = 0.f;
@@ -104,7 +107,7 @@ void processKeyInput(GLFWwindow* window)
 	{
 		glfwSetWindowShouldClose(window, true);
 	}
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	/*if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		camera.ProcessKeyboard(FORWARD, Window::getdt());
 	}
@@ -120,29 +123,41 @@ void processKeyInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		camera.ProcessKeyboard(RIGHT, Window::getdt());
-	}
+	}*/
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
-	float xpos = static_cast<float>(xposIn);
-	float ypos = static_cast<float>(yposIn);
+	static bool firstMouse = true;
+	static float lastX = 0.0f;
+	static float lastY = 0.0f;
 
-	GlobalMousePosX = xpos;
-	GlobalMousePosY = 480.f - ypos;
+	if (firstMouse)
+	{
+		lastX = xposIn;
+		lastY = yposIn;
+		firstMouse = false;
+	}
 
-	std::cout << "The mouse position is: " << xpos << " and " << 480.f - ypos << "." << std::endl;
+	float deltaX = xposIn - lastX;
+	float deltaY = lastY - yposIn;
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+	lastX = xposIn;
+	lastY = yposIn;
 
-	lastX = xpos;
-	lastY = ypos;
-
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	// Right click = Orbit
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		camera.OnMouseRotate(deltaX, deltaY);
+	}
+	// Middle click = Pan
+	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+	{
+		camera.OnMousePan(deltaX, deltaY);
+	}
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(static_cast<float>(yoffset));
+	camera.OnMouseScroll((float)yoffset);
 }

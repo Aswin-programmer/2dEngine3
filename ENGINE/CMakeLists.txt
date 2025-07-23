@@ -40,7 +40,7 @@ add_library (ENGINE
 	"RENDERER/TESTING/GeometryShaderTest.cpp" 
 	"RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.h" 
 	"RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.cpp" 
-)
+ "CAMERA/EditorCamera.h" "CAMERA/EditorCamera.cpp")
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
