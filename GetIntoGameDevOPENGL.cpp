@@ -48,7 +48,10 @@ int main()
 
 	Shader shader3 = Shader(
 		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/particle_vert.glsl").c_str(),
-		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/particle_frag.glsl").c_str()
+		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/particle_frag.glsl").c_str(),
+		nullptr,
+		nullptr,
+		(std::string(RESOURCES_PATH) + "SHADER/PARTICLE_SYSTEMS/geometry_particle_shader.glsl").c_str()
 	);
 
 	ParticleSystemRenderer particleSystemRenderer = ParticleSystemRenderer();

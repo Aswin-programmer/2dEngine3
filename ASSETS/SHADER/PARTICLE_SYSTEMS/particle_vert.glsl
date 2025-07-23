@@ -5,21 +5,16 @@ layout(location = 1) in vec3 aVelocity;  // (optional, unused here)
 layout(location = 2) in float aLife;
 layout(location = 3) in float aMaxLife;
 
-out float vLife;
-out float vMaxLife;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+out VS_OUT
+{
+    vec3 position;
+    float life;
+    float maxLife;
+}vs_out;
 
 void main()
 {
-    vLife = aLife;
-    vMaxLife = aMaxLife;
-
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-
-    // Set size based on life — max 10.0
-    float lifeRatio = clamp(aLife / aMaxLife, 0.0, 1.0);
-    gl_PointSize = mix(1.0, 2.0, lifeRatio); // Shrinks as it fades
+    vs_out.life = aLife;
+    vs_out.maxLife = aMaxLife;
+    vs_out.position = aPos;
 }

@@ -15,7 +15,7 @@
 #include "../../CAMERA/Camera.h"
 #include "../TEXTURE_KTX/TextureLoader.h"
 
-constexpr int MAX_PARTICLES = 1000;
+constexpr int MAX_PARTICLES = 100;
 constexpr glm::vec3 GRAVITY = glm::vec3(0.0f, -0.98, 0.0f);
 constexpr glm::vec3 ORIGIN = glm::vec3(0.0f);
 
