@@ -61,6 +61,12 @@ int main()
 
 	double time = 0;
 
+	// Temporary setup for the GLTFMESHRenderer
+	GLTFMESHRenderer gltfMeshRenderer = GLTFMESHRenderer(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf");
+	Shader shader4 = Shader((std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/vert.glsl").c_str()
+		, (std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/frag.glsl").c_str());
+
+
 	while (!Window::shouldClose())
 	{
 		time = glfwGetTime();
@@ -94,6 +100,12 @@ int main()
 		//particleSystemRenderer.CleanUp();
 		particleSystemRenderer.RefreshParticles(Window::getdt());
 		particleSystemRenderer.Render();
+
+		shader4.use();
+		shader4.setMat4("uView", view);
+		shader4.setMat4("uProjection", projectionP);
+		shader4.setMat4("uModel", model);
+		gltfMeshRenderer.GLTFMESHDraw(shader4);
 
 		Window::update();
 	}
