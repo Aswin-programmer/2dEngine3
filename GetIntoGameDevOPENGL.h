@@ -10,7 +10,9 @@
 #include <WINDOWS/Window.h>
 #include <RENDERER/TEXTURE_KTX/TextureKTX2.h>
 #include <RENDERER/SHADERS/Shader.h>
-#include <RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h>
+//#include <RENDERER/MESH/BASICMESH/BasicMeshRendererInstantiated.h>
+#include <RENDERER/MESH/GLTFMESH/GLTFMESHLoader.h>
+#include <RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h>
 #include <RENDERER/BEZIERS_CURVE/BezierCurveRenderer.h>
 #include <RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.h>
 #include <RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h>

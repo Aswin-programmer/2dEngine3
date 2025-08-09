@@ -76,9 +76,40 @@ bool Window::init(const char* title) {
     std::cout << "OpenGL Renderer: " << glGetString(GL_RENDERER) << std::endl;
 
     //Find the maximum number of texture units the device supports
-    GLint units;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &units);
-    std::cout << "The maximum number of texture units the device supports is :" << units << std::endl;
+    GLint combinedUnits;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &combinedUnits);
+    std::cout << "Max combined texture image units (all stages): "
+        << combinedUnits << std::endl;
+
+    GLint fragUnits;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &fragUnits);
+    std::cout << "Fragment shader texture units: "
+        << fragUnits << std::endl;
+
+    GLint vertUnits;
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &vertUnits);
+    std::cout << "Vertex shader texture units: "
+        << vertUnits << std::endl;
+
+    GLint geomUnits;
+    glGetIntegerv(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS, &geomUnits);
+    std::cout << "Geometry shader texture units: "
+        << geomUnits << std::endl;
+
+    GLint tescUnits;
+    glGetIntegerv(GL_MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS, &tescUnits);
+    std::cout << "Tessellation control shader texture units: "
+        << tescUnits << std::endl;
+
+    GLint teseUnits;
+    glGetIntegerv(GL_MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS, &teseUnits);
+    std::cout << "Tessellation evaluation shader texture units: "
+        << teseUnits << std::endl;
+
+    GLint compUnits;
+    glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, &compUnits);
+    std::cout << "Compute shader texture units: "
+        << compUnits << std::endl;
 
     // Set initial viewport
     glViewport(0, 0, m_width, m_height);

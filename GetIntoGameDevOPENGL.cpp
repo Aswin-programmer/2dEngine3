@@ -61,10 +61,33 @@ int main()
 
 	double time = 0;
 
-	// Temporary setup for the GLTFMESHRenderer
-	GLTFMESHRenderer gltfMeshRenderer = GLTFMESHRenderer(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf");
-	Shader shader4 = Shader((std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/vert.glsl").c_str()
-		, (std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/frag.glsl").c_str());
+	//// Temporary setup for the GLTFMESHRenderer
+	//GLTFMESHRenderer gltfMeshRenderer = GLTFMESHRenderer(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf");
+	Shader shader4 = Shader((std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/gltf_vert.glsl").c_str()
+		, (std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/gltf_frag.glsl").c_str());
+
+	if (!GLTFMESHLoader::LoadGLTFModel(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf"))
+	{
+		std::cout << "Failed to load the sample model!\n";
+	}
+	if (!GLTFMESHLoader::LoadGLTFModel(std::string(RESOURCES_PATH) + "GLTFMODEL/CUBE/cube.gltf"))
+	{
+		std::cout << "Failed to load the sample model!\n";
+	}
+	if (!GLTFMESHLoader::LoadGLTFModel(std::string(RESOURCES_PATH) + "GLTFMODEL/AVOCADO/Avocado.gltf"))
+	{
+		std::cout << "Failed to load the sample model!\n";
+	}
+	if (!GLTFMESHLoader::LoadGLTFModel(std::string(RESOURCES_PATH) + "GLTFMODEL/FISH/BarramundiFish.gltf"))
+	{
+		std::cout << "Failed to load the sample model!\n";
+	}
+	GLTFMESHRenderer gltfRenderer;
+	gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
+		glm::vec3(0.f, 0.f, 0.f),
+		glm::vec3(0.f, 0.f, 0.f),
+		glm::vec3(1.f, 1.f, 1.f)
+	));
 
 
 	while (!Window::shouldClose())
@@ -101,14 +124,58 @@ int main()
 		particleSystemRenderer.RefreshParticles(Window::getdt());
 		particleSystemRenderer.Render();
 
+		gltfRenderer.CleanUp();
+		gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(1.f, 1.f, 1.f)
+		));
+		gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
+			glm::vec3(1.f, 1.f, 0.f),
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(1.f, 1.f, 1.f)
+		));
+		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+			glm::vec3(3.f, 1.f, 0.f),
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f)
+		));
+		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+			glm::vec3(3.f, 3.f, 0.f),
+			glm::vec3(90.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f)
+		));
+		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+			glm::vec3(-3.f, -1.f, 0.f),
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f)
+		));
+		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+			glm::vec3(-3.f, -3.f, 0.f),
+			glm::vec3(90.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f)
+		));
+
+		for (int i = -50; i <= 50; i++)
+		{
+			for (int j = -50; j <= 50; j++)
+			{
+				gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+					glm::vec3(i, j, 0.f),
+					glm::vec3(0.f, 0.f, 0.f),
+					glm::vec3(5.f, 5.f, 5.f)
+				));
+			}
+		}
+
 		shader4.use();
-		shader4.setMat4("uView", view);
-		shader4.setMat4("uProjection", projectionP);
-		shader4.setMat4("uModel", model);
-		gltfMeshRenderer.GLTFMESHDraw(shader4);
+		shader4.setMat4("view", view);
+		shader4.setMat4("projection", projectionP);
+		gltfRenderer.GLTFMESHRender(shader4);
 
 		Window::update();
 	}
+	
 	Window::cleanup();
 	return 0;
 }
