@@ -70,6 +70,11 @@ bool Window::init(const char* title) {
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_POINT_SPRITE);
 
+    // Setting up the face culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
+
     // Print OpenGL version info for debugging
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;

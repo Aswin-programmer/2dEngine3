@@ -26,6 +26,74 @@ EditorCamera camera(45.0f, 640.f / 480.f, 0.1f, 200.0f);
 float GlobalMousePosX = 0.f;
 float GlobalMousePosY = 0.f;
 
+struct Frustum {
+	glm::vec4 planes[6]; // (a, b, c, d) for ax+by+cz+d=0
+};
+
+Frustum ExtractFrustumPlanes(const glm::mat4& vp) {
+	Frustum frustum;
+
+	// Left
+	frustum.planes[0] = glm::vec4(
+		vp[0][3] + vp[0][0],
+		vp[1][3] + vp[1][0],
+		vp[2][3] + vp[2][0],
+		vp[3][3] + vp[3][0]
+	);
+	// Right
+	frustum.planes[1] = glm::vec4(
+		vp[0][3] - vp[0][0],
+		vp[1][3] - vp[1][0],
+		vp[2][3] - vp[2][0],
+		vp[3][3] - vp[3][0]
+	);
+	// Bottom
+	frustum.planes[2] = glm::vec4(
+		vp[0][3] + vp[0][1],
+		vp[1][3] + vp[1][1],
+		vp[2][3] + vp[2][1],
+		vp[3][3] + vp[3][1]
+	);
+	// Top
+	frustum.planes[3] = glm::vec4(
+		vp[0][3] - vp[0][1],
+		vp[1][3] - vp[1][1],
+		vp[2][3] - vp[2][1],
+		vp[3][3] - vp[3][1]
+	);
+	// Near
+	frustum.planes[4] = glm::vec4(
+		vp[0][3] + vp[0][2],
+		vp[1][3] + vp[1][2],
+		vp[2][3] + vp[2][2],
+		vp[3][3] + vp[3][2]
+	);
+	// Far
+	frustum.planes[5] = glm::vec4(
+		vp[0][3] - vp[0][2],
+		vp[1][3] - vp[1][2],
+		vp[2][3] - vp[2][2],
+		vp[3][3] - vp[3][2]
+	);
+
+	// Normalize all planes
+	for (int i = 0; i < 6; i++) {
+		float length = glm::length(glm::vec3(frustum.planes[i]));
+		frustum.planes[i] /= length;
+	}
+
+	return frustum;
+}
+
+bool IsSphereInsideFrustum(const Frustum& frustum, const glm::vec3& center, float radius) {
+	for (int i = 0; i < 6; i++) {
+		float distance = glm::dot(glm::vec3(frustum.planes[i]), center) + frustum.planes[i].w;
+		if (distance < -radius)
+			return false; // Completely outside
+	}
+	return true; // At least partially inside
+}
+
 int main()
 {
 	Test test("Hello World");
@@ -89,13 +157,9 @@ int main()
 		glm::vec3(1.f, 1.f, 1.f)
 	));
 
-
 	while (!Window::shouldClose())
 	{
 		time = glfwGetTime();
-
-		Window::clearScreen();
-		Window::processInput();
 
 		processKeyInput(Window::getGLFWWindow());
 
@@ -123,6 +187,15 @@ int main()
 		//particleSystemRenderer.CleanUp();
 		particleSystemRenderer.RefreshParticles(Window::getdt());
 		particleSystemRenderer.Render();
+
+		glm::mat4 vp = projectionP * view;
+		Frustum frustum = ExtractFrustumPlanes(vp);
+
+		glm::vec3 objPos = glm::vec3(0.f, 0.f, 0.f);
+		float objRadius = 5.0f; // precomputed or loaded from model bounds
+
+		Window::clearScreen();
+		Window::processInput();
 
 		gltfRenderer.CleanUp();
 		gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
@@ -156,15 +229,25 @@ int main()
 			glm::vec3(50.f, 50.f, 50.f)
 		));
 
+		float time = glfwGetTime();
+		float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
+
 		for (int i = -50; i <= 50; i++)
 		{
 			for (int j = -50; j <= 50; j++)
 			{
-				gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-					glm::vec3(i, j, 0.f),
-					glm::vec3(0.f, 0.f, 0.f),
-					glm::vec3(5.f, 5.f, 5.f)
-				));
+				glm::vec3 objPos = glm::vec3(i , 0.f, j);
+				if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
+					gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+						objPos,
+						glm::vec3(
+							0.f,                                   // X rotation (pitch)
+							fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+							0.f                                    // Z rotation (roll)
+						),
+						glm::vec3(5.f)
+					));
+				}
 			}
 		}
 
