@@ -17,11 +17,15 @@ public:
 	TextureKTX2(std::string filepath, GLenum target);
 	~TextureKTX2();
 
+	//TEMP
+	GLuint GetTextureID() { return textureID; }
+
 	void Bind(int texture_unit);
 	void UnBind();
 
 	bool LoadTX2Texture(const char* filePath);
 	bool LoadTX2Texture2D(const char* filePath);
+	bool LoadKTX2CubeMap(const char* filePath);
 	bool ConvertPNGtoKTX2Texture(const std::string& pngSourcePath, const std::string& ktxOutputPath);
 	std::string ConvertPNG2KTG2(const std::string& pngPath);
 

@@ -14,6 +14,7 @@ float Window::b = 0.0f;
 float Window::a = 1.0f;
 
 bool Window::init(const char* title) {
+    PROFILE_SCOPE_N("Window::Init");
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -47,7 +48,7 @@ bool Window::init(const char* title) {
     glfwMakeContextCurrent(m_window);
     //glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //Enable v-sync { Locks the FPS to the monitor refreshing rate! }
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -70,9 +71,9 @@ bool Window::init(const char* title) {
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_POINT_SPRITE);
 
-    // Setting up the face culling
+    //// Setting up the face culling
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    glCullFace(GL_FRONT);
     glFrontFace(GL_CW);
 
     // Print OpenGL version info for debugging
@@ -138,7 +139,7 @@ bool Window::shouldClose() {
 }
 
 void Window::update() {
-
+    PROFILE_SCOPE_N("Window::Update");
     endTime = Time::getTime();
     dt = endTime - beginTime;
     beginTime = endTime;
@@ -149,6 +150,7 @@ void Window::update() {
 
 void Window::clearScreen()
 {
+    PROFILE_SCOPE_N("Window::ClearScreen");
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -166,6 +168,7 @@ void Window::getFPS()
 
 void Window::cleanup()
 {
+    PROFILE_SCOPE_N("Window::CleanUp");
     glfwTerminate();
 }
 

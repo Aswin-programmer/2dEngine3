@@ -7,6 +7,8 @@
 
 #include "../UTILITIES/Time.h"
 
+#include "PROFILING/Profiler.h"
+
 class Window {
 public:
     // Initialize the window and OpenGL context

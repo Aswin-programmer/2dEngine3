@@ -18,3 +18,5 @@
 #include <RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h>
 #include <CAMERA/Camera.h>
 #include <CAMERA/EditorCamera.h>
+
+#include <PROFILING/Profiler.h>

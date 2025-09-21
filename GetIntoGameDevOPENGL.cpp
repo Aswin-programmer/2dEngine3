@@ -157,8 +157,73 @@ int main()
 		glm::vec3(1.f, 1.f, 1.f)
 	));
 
+
+	// Testing the working of the skybox:
+	// cube vertices (36 vertices: 6 faces * 2 tris * 3 verts)
+	float skyboxVerts[] = {
+		// positions
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	unsigned int skyboxVAO, skyboxVBO;
+	glGenVertexArrays(1, &skyboxVAO);
+	glGenBuffers(1, &skyboxVBO);
+	glBindVertexArray(skyboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVerts), &skyboxVerts, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
+
+	Shader skyboxShader = Shader((std::string(RESOURCES_PATH) + "SHADER/CUBE_MAP/cube_map_vert.glsl").c_str()
+		, (std::string(RESOURCES_PATH) + "SHADER/CUBE_MAP/cube_map_frag.glsl").c_str());
+
+	TextureKTX2 skyboxTexture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/CUBEMAP/skybox.ktx2").c_str());
+
 	while (!Window::shouldClose())
 	{
+		PROFILE_SCOPE_N("MainLoop");
+
 		time = glfwGetTime();
 
 		processKeyInput(Window::getGLFWWindow());
@@ -197,7 +262,45 @@ int main()
 		Window::clearScreen();
 		Window::processInput();
 
+		// --- Safe skybox draw (do this BEFORE drawing scene meshes or AFTER with depth mask off) ---
+
+		// Save minimal state (optional, but explicit)
+		GLboolean wasCull = glIsEnabled(GL_CULL_FACE);
+		GLboolean wasDepthTest = glIsEnabled(GL_DEPTH_TEST);
+		GLint prevDepthFunc;
+		glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
+
+		// Prepare state for skybox
+		glDisable(GL_CULL_FACE);                // draw inside faces easily
+		glDepthFunc(GL_LEQUAL);                 // allow skybox fragments at far plane
+		glDepthMask(GL_FALSE);                  // IMPORTANT: don't write to depth buffer
+
+		skyboxShader.use();
+		// Build pure rotation from yaw/pitch
+		glm::mat4 pureRotation = glm::mat4(1.0f);
+		pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetPitch()), glm::vec3(1, 0, 0));
+		pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetYaw()), glm::vec3(0, 1, 0));
+
+		skyboxShader.setMat4("u_view", pureRotation);
+		skyboxShader.setMat4("u_proj", projectionP);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture.GetTextureID());
+		skyboxShader.setInt("skybox", 0);
+
+		glBindVertexArray(skyboxVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+
+		// Restore state
+		glDepthMask(GL_TRUE);                   // allow meshes to write depth again
+		glDepthFunc(GL_LESS);                   // restore typical depth test
+		if (!wasCull) glDisable(GL_CULL_FACE);  // optional restore; ensure CullFace is consistent
+		else glEnable(GL_CULL_FACE);
+		// (if you need to restore other state like glFrontFace/glCullFace, do it here)
+
 		gltfRenderer.CleanUp();
+
 		gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
 			glm::vec3(0.f, 0.f, 0.f),
 			glm::vec3(0.f, 0.f, 0.f),
@@ -229,34 +332,48 @@ int main()
 			glm::vec3(50.f, 50.f, 50.f)
 		));
 
-		float time = glfwGetTime();
+		float time1 = glfwGetTime();
 		float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
 
 		for (int i = -50; i <= 50; i++)
 		{
 			for (int j = -50; j <= 50; j++)
 			{
-				glm::vec3 objPos = glm::vec3(i , 0.f, j);
-				if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
-					gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
-						objPos,
-						glm::vec3(
-							0.f,                                   // X rotation (pitch)
-							fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
-							0.f                                    // Z rotation (roll)
-						),
-						glm::vec3(5.f)
-					));
-				}
+				glm::vec3 objPos = glm::vec3(i, 0.f, j);
+				//if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
+				//	gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+				//		objPos,
+				//		glm::vec3(
+				//			0.f,                                   // X rotation (pitch)
+				//			fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+				//			0.f                                    // Z rotation (roll)
+				//		),
+				//		glm::vec3(5.f)
+				//	));
+				//}
+				gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+					objPos,
+					glm::vec3(
+						0.f,                                   // X rotation (pitch)
+						fmod(time1 * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+						0.f                                    // Z rotation (roll)
+					),
+					glm::vec3(5.f)
+				));
 			}
 		}
 
+		gltfRenderer.ExperimentalHelper();
+		
+	
 		shader4.use();
 		shader4.setMat4("view", view);
 		shader4.setMat4("projection", projectionP);
 		gltfRenderer.GLTFMESHRender(shader4);
 
 		Window::update();
+
+		PROFILE_FRAME();
 	}
 	
 	Window::cleanup();

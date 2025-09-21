@@ -1,4 +1,5 @@
 #include "GLTFMESHRenderer.h"
+#include "GLTFMESHRenderer.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -278,63 +279,15 @@ bool GLTFMESHRenderer::AddGLTFModelToRenderer(const std::string& modelName, cons
 
 void GLTFMESHRenderer::GLTFMESHRender(Shader& shader)
 {
-    if (meshStructureForRendering.empty()) return;
+    PROFILE_SCOPE_N("Renderer::render");
 
-    // First upload buffers if data changed
-    uploadBuffersIfRequired();
+    if (indirectCommands.empty()) return;
 
-    // Build indirect commands and a consolidated orientation array
-    indirectCommands.clear();
-    std::vector<GLTFPrimitivesOrientation> allOrientations;
-    allOrientations.reserve(10000);
+    GLuint queryID;
+    glGenQueries(1, &queryID);
 
-    GLuint baseInstance = 0;
-    for (auto const& kv : meshStructureForRendering)
-    {
-        const std::string& meshKey = kv.first;
-        const MeshStructureForRendering& msr = kv.second;
-
-        // Append orientations for this mesh
-        auto it = primitivesOrientationPerMesh.find(meshKey);
-        size_t instancesForThisMesh = 0;
-        if (it != primitivesOrientationPerMesh.end())
-        {
-            instancesForThisMesh = it->second.size();
-            allOrientations.insert(allOrientations.end(), it->second.begin(), it->second.end());
-        }
-        else
-        {
-            instancesForThisMesh = static_cast<size_t>(msr.meshInstances);
-            // push default orientations if none present
-            for (size_t i = 0; i < instancesForThisMesh; ++i)
-                allOrientations.emplace_back(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f));
-        }
-
-        // create an indirect command per mesh
-        DrawElementsIndirectCommand cmd(
-            static_cast<GLuint>(msr.meshIndexCnt),               // count
-            static_cast<GLuint>(instancesForThisMesh),           // primCount (instances)
-            static_cast<GLuint>(msr.meshIndexBufferOffset),      // firstIndex (index offset in elements)
-            static_cast<GLuint>(msr.meshPositionVertexOffset),   // baseVertex
-            //0,
-            baseInstance                                         // baseInstance
-        );
-        indirectCommands.push_back(cmd);
-
-        baseInstance += static_cast<GLuint>(instancesForThisMesh);
-    }
-
-    // Upload all orientations to SSBO
-    if (!allOrientations.empty())
-    {
-        glNamedBufferSubData(OrientationSSBO, 0, allOrientations.size() * sizeof(GLTFPrimitivesOrientation), allOrientations.data());
-    }
-
-    // Upload indirect commands
-    if (!indirectCommands.empty())
-    {
-        glNamedBufferSubData(IndirectCommandBuffer, 0, indirectCommands.size() * sizeof(DrawElementsIndirectCommand), indirectCommands.data());
-    }
+    // Start timer query
+    glBeginQuery(GL_TIME_ELAPSED, queryID);
 
     // Draw
     glBindVertexArray(meshVAO);
@@ -344,14 +297,27 @@ void GLTFMESHRenderer::GLTFMESHRender(Shader& shader)
     {
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(indirectCommands.size()), 0);
     }
-    else if (indirectCommands.size() == 1)
+    else
     {
         glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr);
     }
 
-    // Unbind for cleanliness
+    // Unbind
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
     glBindVertexArray(0);
+
+    // End timer query
+    glEndQuery(GL_TIME_ELAPSED);
+
+    // Get result (blocking)
+    GLuint64 timeElapsed = 0;
+    glGetQueryObjectui64v(queryID, GL_QUERY_RESULT, &timeElapsed);
+
+    glDeleteQueries(1, &queryID);
+
+    // Convert from nanoseconds to milliseconds
+    double gpuTimeMs = timeElapsed / 1e6;
+    std::cout << "[GPU] GLTFMESHRender took: " << gpuTimeMs << " ms" << std::endl;
 }
 
 void GLTFMESHRenderer::uploadBuffersIfRequired()
@@ -463,5 +429,66 @@ void GLTFMESHRenderer::copyAccessorToIndexVector(const tinygltf::Model& model, c
     }
     default:
         throw std::runtime_error("[GLTFMESHRenderer] Unsupported index component type");
+    }
+}
+
+void GLTFMESHRenderer::ExperimentalHelper()
+{
+    if (meshStructureForRendering.empty()) return;
+
+    // First upload buffers if data changed
+    uploadBuffersIfRequired();
+
+    // Build indirect commands and a consolidated orientation array
+    indirectCommands.clear();
+    std::vector<GLTFPrimitivesOrientation> allOrientations;
+    allOrientations.reserve(10000);
+
+    GLuint baseInstance = 0;
+    for (auto const& kv : meshStructureForRendering)
+    {
+        const std::string& meshKey = kv.first;
+        const MeshStructureForRendering& msr = kv.second;
+
+        // Append orientations for this mesh
+        auto it = primitivesOrientationPerMesh.find(meshKey);
+        size_t instancesForThisMesh = 0;
+        if (it != primitivesOrientationPerMesh.end())
+        {
+            instancesForThisMesh = it->second.size();
+            allOrientations.insert(allOrientations.end(), it->second.begin(), it->second.end());
+        }
+        else
+        {
+            instancesForThisMesh = static_cast<size_t>(msr.meshInstances);
+            // push default orientations if none present
+            for (size_t i = 0; i < instancesForThisMesh; ++i)
+                allOrientations.emplace_back(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f));
+        }
+
+        // create an indirect command per mesh
+        DrawElementsIndirectCommand cmd(
+            static_cast<GLuint>(msr.meshIndexCnt),               // count
+            static_cast<GLuint>(instancesForThisMesh),           // primCount (instances)
+            static_cast<GLuint>(msr.meshIndexBufferOffset),      // firstIndex (index offset in elements)
+            static_cast<GLuint>(msr.meshPositionVertexOffset),   // baseVertex
+            //0,
+            baseInstance                                         // baseInstance
+        );
+        indirectCommands.push_back(cmd);
+
+        baseInstance += static_cast<GLuint>(instancesForThisMesh);
+    }
+
+    // Upload all orientations to SSBO
+    if (!allOrientations.empty())
+    {
+        glNamedBufferSubData(OrientationSSBO, 0, allOrientations.size() * sizeof(GLTFPrimitivesOrientation), allOrientations.data());
+    }
+
+    // Upload indirect commands
+    if (!indirectCommands.empty())
+    {
+        glNamedBufferSubData(IndirectCommandBuffer, 0, indirectCommands.size() * sizeof(DrawElementsIndirectCommand), indirectCommands.data());
     }
 }

@@ -11,11 +11,14 @@ endif()
 
 project ("ENGINE")
 
+option(TRACY_ENABLE "Enable Tracy profiler" ON)
+
 add_subdirectory(DEPENDENCIES/GLFW)
 add_subdirectory(DEPENDENCIES/GLAD)
 add_subdirectory(DEPENDENCIES/GLM)
 add_subdirectory(DEPENDENCIES/KTX)
 add_subdirectory(DEPENDENCIES/TINYGLTF)
+add_subdirectory(DEPENDENCIES/TRACY)
 
 # Add source to this project's library.
 add_library (ENGINE 
@@ -42,7 +45,11 @@ add_library (ENGINE
 	"RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.h" 
 	"RENDERER/PARTICLE_SYSTEMS/ParticleSystemRenderer.cpp" 
 	"CAMERA/EditorCamera.h" "CAMERA/EditorCamera.cpp"
- "RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h" "RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.cpp" "RENDERER/MESH/GLTFMESH/GLTFMESHLoader.h" "RENDERER/MESH/GLTFMESH/GLTFMESHLoader.cpp")
+	"RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h" 
+	"RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.cpp" 
+	"RENDERER/MESH/GLTFMESH/GLTFMESHLoader.h" 
+	"RENDERER/MESH/GLTFMESH/GLTFMESHLoader.cpp"
+ "PROFILING/Profiler.h")
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
@@ -54,6 +61,10 @@ target_link_libraries(ENGINE PUBLIC
 	glm
 	ktx
 	tinygltf
+	TracyClient
 )
+
+target_compile_definitions(ENGINE PUBLIC TRACY_ENABLE)
+
 
 

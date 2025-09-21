@@ -12,6 +12,8 @@
 #include "GLTFMESHLoader.h"
 #include "../../SHADERS/Shader.h"
 
+#include "PROFILING/Profiler.h"
+
 // Limits - tune to your needs
 constexpr size_t MAX_TRIANGLES = 1000000; // reduce for safety if you want
 constexpr size_t MAX_POS_VERTICES = MAX_TRIANGLES * 3;      // count of vertices (not floats)
@@ -74,6 +76,9 @@ public:
     // Clear CPU-side containers and GPU buffers (keeps VAO created, but empties internal state)
     void CleanUp();
 
+    // Experimental
+    void ExperimentalHelper();
+
 private:
     // GPU objects
     GLuint meshVAO = 0;
@@ -110,4 +115,6 @@ private:
     void uploadBuffersIfRequired();
     static void copyAccessorToFloatVector(const tinygltf::Model& model, const tinygltf::Accessor& accessor, std::vector<float>& out, int expectedNumComponents);
     static void copyAccessorToIndexVector(const tinygltf::Model& model, const tinygltf::Accessor& accessor, std::vector<uint32_t>& out, uint32_t indexOffset);
+
+    
 };

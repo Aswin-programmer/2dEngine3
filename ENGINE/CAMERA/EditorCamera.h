@@ -14,6 +14,9 @@ public:
     void OnMousePan(float deltaX, float deltaY);
     void OnMouseScroll(float delta);
 
+    float GetYaw() const { return m_Yaw; }
+    float GetPitch() const { return m_Pitch; }
+
     void SetViewportSize(float width, float height);
 
     float GetDistance() const { return m_Distance; }

@@ -1,6 +1,7 @@
 #include "TextureKTX2.h"
 #include "TextureKTX2.h"
 #include "TextureKTX2.h"
+#include "TextureKTX2.h"
 
 TextureKTX2::TextureKTX2(std::string filepath)
 	:
@@ -8,7 +9,8 @@ TextureKTX2::TextureKTX2(std::string filepath)
 	target{GL_TEXTURE_2D}
 {
 	//LoadTX2Texture(ConvertPNG2KTG2(filepath).c_str());
-	LoadTX2Texture(filepath.c_str());
+	//LoadTX2Texture(filepath.c_str());
+	LoadKTX2CubeMap(filepath.c_str());
 }
 
 TextureKTX2::TextureKTX2(std::string filepath, GLenum target)
@@ -17,7 +19,8 @@ TextureKTX2::TextureKTX2(std::string filepath, GLenum target)
 	target{target}
 {
 	//LoadTX2Texture(ConvertPNG2KTG2(filepath).c_str());
-	LoadTX2Texture(filepath.c_str());
+	//LoadTX2Texture(filepath.c_str());
+	//LoadKTX2CubeMap(filepath.c_str());
 }
 
 TextureKTX2::~TextureKTX2()
@@ -175,6 +178,69 @@ bool TextureKTX2::LoadTX2Texture2D(const char* filePath)
 	}
 
 	glBindTexture(target, 0);
+
+	return true;
+}
+
+bool TextureKTX2::LoadKTX2CubeMap(const char* filePath)
+{
+	if (!glfwGetCurrentContext()) {
+		std::cout << "No OpenGL context available for texture loading" << std::endl;
+		return false;
+	}
+	if (!std::filesystem::exists(filePath)) {
+		std::cout << "KTX2 file does not exist: " << filePath << std::endl;
+		return false;
+	}
+
+	ktxTexture2* texture = nullptr;
+	KTX_error_code result = ktxTexture2_CreateFromNamedFile(
+		filePath,
+		KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+		&texture
+	);
+	if (result != KTX_SUCCESS) {
+		std::cout << "Failed to load KTX2 Texture: " << ktxErrorString(result) << std::endl;
+		return false;
+	}
+
+	// If transcode needed (Basis-compressed inside), transcode to a desktop-friendly format
+	if (ktxTexture2_NeedsTranscoding(texture)) {
+		KTX_error_code err = ktxTexture2_TranscodeBasis(texture, KTX_TTF_BC3_RGBA, 0);
+		if (err != KTX_SUCCESS) {
+			std::cout << "Failed to transcode: " << ktxErrorString(err) << std::endl;
+			ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
+			return false;
+		}
+	}
+
+	// Force our target to be CUBE_MAP
+	target = GL_TEXTURE_CUBE_MAP;
+
+	// Upload. ktxTexture_GLUpload will create/open the GL texture if we pass textureID/address.
+	result = ktxTexture_GLUpload(reinterpret_cast<ktxTexture*>(texture), &textureID, &target, nullptr);
+	if (result != KTX_SUCCESS) {
+		std::cout << "Failed to upload KTX2 cubemap to GPU: " << ktxErrorString(result) << std::endl;
+		ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
+		return false;
+	}
+
+	// Done with CPU-side ktx texture
+	ktxTexture_Destroy(reinterpret_cast<ktxTexture*>(texture));
+
+	glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(textureID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	// Enable seamless cubemap sampling
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	// Optional debug: is compressed?
+	GLint isCompressed = 0;
+	glGetTextureLevelParameteriv(textureID, 0, GL_TEXTURE_COMPRESSED, &isCompressed);
+	std::cout << "Cubemap texture " << textureID << " compressed? " << (isCompressed ? "yes" : "no") << std::endl;
 
 	return true;
 }
