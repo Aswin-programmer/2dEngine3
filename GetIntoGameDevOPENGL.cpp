@@ -6,6 +6,7 @@ extern "C" {
 
 	__declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
 }
+#define M_PI 3.14159265358979323846
 
 #include "GetIntoGameDevOPENGL.h"
 
@@ -93,6 +94,30 @@ bool IsSphereInsideFrustum(const Frustum& frustum, const glm::vec3& center, floa
 	}
 	return true; // At least partially inside
 }
+
+reactphysics3d::Vector3 ToEulerAngles(const reactphysics3d::Quaternion& q) {
+    reactphysics3d::Vector3 angles;
+
+    // roll (x-axis rotation)
+    float sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+    float cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+    angles.x = std::atan2(sinr_cosp, cosr_cosp);
+
+    // pitch (y-axis rotation)
+    float sinp = 2 * (q.w * q.y - q.z * q.x);
+    if (std::abs(sinp) >= 1)
+        angles.y = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+    else
+        angles.y = std::asin(sinp);
+
+    // yaw (z-axis rotation)
+    float siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+    float cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+    angles.z = std::atan2(siny_cosp, cosy_cosp);
+
+    return angles;
+}
+
 
 int main()
 {
@@ -220,6 +245,32 @@ int main()
 
 	TextureKTX2 skyboxTexture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/CUBEMAP/skybox.ktx2").c_str());
 
+	//    ##          PHYSICS SECTION          ##    
+	reactphysics3d::PhysicsCommon physicsCommon;
+
+	reactphysics3d::PhysicsWorld* world = physicsCommon.createPhysicsWorld();
+
+	// Falling cube
+	reactphysics3d::RigidBody* body = world->createRigidBody(reactphysics3d::Transform(reactphysics3d::Vector3(0, 20, 0), reactphysics3d::Quaternion::identity()));
+	body->setType(reactphysics3d::BodyType::DYNAMIC);
+
+	reactphysics3d::BoxShape* boxShape = physicsCommon.createBoxShape(reactphysics3d::Vector3(0.5f, 0.5f, 0.5f));
+	body->addCollider(boxShape, reactphysics3d::Transform::identity());
+	body->updateMassPropertiesFromColliders();
+
+	// Ground
+	reactphysics3d::RigidBody* ground = world->createRigidBody(reactphysics3d::Transform(reactphysics3d::Vector3(0, 0.f, 0), reactphysics3d::Quaternion::identity()));
+	ground->setType(reactphysics3d::BodyType::STATIC);
+
+	reactphysics3d::BoxShape* groundShape = physicsCommon.createBoxShape(reactphysics3d::Vector3(10.f, 0.5f, 10.f));
+	ground->addCollider(groundShape, reactphysics3d::Transform::identity());
+
+	// Step physics
+	const float timeStep = 1.0f / 60.0f;
+
+
+	// ##                       End of physics section                ##
+
 	while (!Window::shouldClose())
 	{
 		PROFILE_SCOPE_N("MainLoop");
@@ -299,6 +350,7 @@ int main()
 		else glEnable(GL_CULL_FACE);
 		// (if you need to restore other state like glFrontFace/glCullFace, do it here)
 
+		/*
 		gltfRenderer.CleanUp();
 
 		gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
@@ -371,12 +423,62 @@ int main()
 		shader4.setMat4("projection", projectionP);
 		gltfRenderer.GLTFMESHRender(shader4);
 
+		*/
+		gltfRenderer.CleanUp();
+
+		reactphysics3d::Transform transform = body->getTransform();
+		reactphysics3d::Vector3 position = transform.getPosition();
+		reactphysics3d::Quaternion q = transform.getOrientation();
+		auto euler = ToEulerAngles(q);
+		gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
+			glm::vec3(position.x, position.y, position.z),
+			glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),
+			glm::vec3(1.f, 1.f, 1.f)
+		));
+
+		reactphysics3d::Transform transform2 = ground->getTransform();
+		reactphysics3d::Vector3 position2 = transform2.getPosition();
+		q = transform2.getOrientation();
+    	euler = ToEulerAngles(q);
+		reactphysics3d::Collider* collider = ground->getCollider(0);
+		reactphysics3d::BoxShape* shape = dynamic_cast<reactphysics3d::BoxShape*>(collider->getCollisionShape());
+
+		if(shape) {
+			reactphysics3d::Vector3 halfExtents = shape->getHalfExtents();
+			reactphysics3d::Vector3 size = halfExtents;  // full size
+
+			gltfRenderer.AddGLTFModelToRenderer(
+				"cube.gltf",
+				GLTFModelOrientation(
+					glm::vec3(position2.x, position2.y, position2.z),
+					glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),            // rotation (you can also extract quaternion if needed)
+					glm::vec3(size.x, size.y, size.z)    // scale == size
+				)
+			);
+		}
+
+
+		gltfRenderer.ExperimentalHelper();
+		
+	
+		shader4.use();
+		shader4.setMat4("view", view);
+		shader4.setMat4("projection", projectionP);
+		gltfRenderer.GLTFMESHRender(shader4);
+
+
+		world->update(timeStep);
+
 		Window::update();
 
 		PROFILE_FRAME();
 	}
 	
 	Window::cleanup();
+
+	physicsCommon.destroyPhysicsWorld(world);
+
+
 	return 0;
 }
 

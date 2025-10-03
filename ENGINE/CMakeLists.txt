@@ -19,6 +19,7 @@ add_subdirectory(DEPENDENCIES/GLM)
 add_subdirectory(DEPENDENCIES/KTX)
 add_subdirectory(DEPENDENCIES/TINYGLTF)
 add_subdirectory(DEPENDENCIES/TRACY)
+add_subdirectory(DEPENDENCIES/REACTPHYSICS3D)
 
 # Add source to this project's library.
 add_library (ENGINE 
@@ -62,6 +63,7 @@ target_link_libraries(ENGINE PUBLIC
 	ktx
 	tinygltf
 	TracyClient
+	reactphysics3d
 )
 
 target_compile_definitions(ENGINE PUBLIC TRACY_ENABLE)

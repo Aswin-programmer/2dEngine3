@@ -18,5 +18,6 @@
 #include <RENDERER/MESH/GLTFMESH/GLTFMESHRenderer.h>
 #include <CAMERA/Camera.h>
 #include <CAMERA/EditorCamera.h>
+#include <reactphysics3d/reactphysics3d.h>
 
 #include <PROFILING/Profiler.h>
