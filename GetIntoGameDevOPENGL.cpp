@@ -126,6 +126,9 @@ int main()
 
 	Window::init("TESTING");
 
+	//Setup the MemoryTracker
+	std::shared_ptr<MemoryTracker> memoryTracker(std::make_shared<MemoryTracker>());
+
 	glfwSetCursorPosCallback(Window::getGLFWWindow(), mouse_callback);
 	glfwSetScrollCallback(Window::getGLFWWindow(), scroll_callback);
 
@@ -154,6 +157,8 @@ int main()
 
 	double time = 0;
 
+	memoryTracker->AddMemoryTrackerEntry("Test1");
+
 	//// Temporary setup for the GLTFMESHRenderer
 	//GLTFMESHRenderer gltfMeshRenderer = GLTFMESHRenderer(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf");
 	Shader shader4 = Shader((std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/gltf_vert.glsl").c_str()
@@ -175,6 +180,9 @@ int main()
 	{
 		std::cout << "Failed to load the sample model!\n";
 	}
+
+	memoryTracker->AddEndForMemoryTrackerEntry("Test1");
+
 	GLTFMESHRenderer gltfRenderer;
 	gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
 		glm::vec3(0.f, 0.f, 0.f),
@@ -245,7 +253,10 @@ int main()
 
 	TextureKTX2 skyboxTexture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/CUBEMAP/skybox.ktx2").c_str());
 
-	//    ##          PHYSICS SECTION          ##    
+	//    ##          PHYSICS SECTION          ## 
+	
+	memoryTracker->AddMemoryTrackerEntry("Physics");
+	 
 	reactphysics3d::PhysicsCommon physicsCommon;
 
 	reactphysics3d::PhysicsWorld* world = physicsCommon.createPhysicsWorld();
@@ -265,6 +276,8 @@ int main()
 	reactphysics3d::BoxShape* groundShape = physicsCommon.createBoxShape(reactphysics3d::Vector3(10.f, 0.5f, 10.f));
 	ground->addCollider(groundShape, reactphysics3d::Transform::identity());
 
+	memoryTracker->AddEndForMemoryTrackerEntry("Physics");
+
 	// Step physics
 	const float timeStep = 1.0f / 60.0f;
 
@@ -274,6 +287,8 @@ int main()
 	while (!Window::shouldClose())
 	{
 		PROFILE_SCOPE_N("MainLoop");
+
+		memoryTracker->AddMemoryTrackerEntry("Rendering");
 
 		time = glfwGetTime();
 
@@ -350,81 +365,81 @@ int main()
 		else glEnable(GL_CULL_FACE);
 		// (if you need to restore other state like glFrontFace/glCullFace, do it here)
 
-		/*
+		
 		gltfRenderer.CleanUp();
 
-		gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(1.f, 1.f, 1.f)
-		));
-		gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
-			glm::vec3(1.f, 1.f, 0.f),
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(1.f, 1.f, 1.f)
-		));
-		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
-			glm::vec3(3.f, 1.f, 0.f),
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f)
-		));
-		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-			glm::vec3(3.f, 3.f, 0.f),
-			glm::vec3(90.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f)
-		));
-		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
-			glm::vec3(-3.f, -1.f, 0.f),
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f)
-		));
-		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-			glm::vec3(-3.f, -3.f, 0.f),
-			glm::vec3(90.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f)
-		));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
+		//	glm::vec3(0.f, 0.f, 0.f),
+		//	glm::vec3(0.f, 0.f, 0.f),
+		//	glm::vec3(1.f, 1.f, 1.f)
+		//));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
+		//	glm::vec3(1.f, 1.f, 0.f),
+		//	glm::vec3(0.f, 0.f, 0.f),
+		//	glm::vec3(1.f, 1.f, 1.f)
+		//));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+		//	glm::vec3(3.f, 1.f, 0.f),
+		//	glm::vec3(0.f, 0.f, 0.f),
+		//	glm::vec3(50.f, 50.f, 50.f)
+		//));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+		//	glm::vec3(3.f, 3.f, 0.f),
+		//	glm::vec3(90.f, 0.f, 0.f),
+		//	glm::vec3(50.f, 50.f, 50.f)
+		//));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+		//	glm::vec3(-3.f, -1.f, 0.f),
+		//	glm::vec3(0.f, 0.f, 0.f),
+		//	glm::vec3(50.f, 50.f, 50.f)
+		//));
+		//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+		//	glm::vec3(-3.f, -3.f, 0.f),
+		//	glm::vec3(90.f, 0.f, 0.f),
+		//	glm::vec3(50.f, 50.f, 50.f)
+		//));
 
-		float time1 = glfwGetTime();
-		float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
+		//float time1 = glfwGetTime();
+		//float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
 
-		for (int i = -50; i <= 50; i++)
-		{
-			for (int j = -50; j <= 50; j++)
-			{
-				glm::vec3 objPos = glm::vec3(i, 0.f, j);
-				//if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
-				//	gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
-				//		objPos,
-				//		glm::vec3(
-				//			0.f,                                   // X rotation (pitch)
-				//			fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
-				//			0.f                                    // Z rotation (roll)
-				//		),
-				//		glm::vec3(5.f)
-				//	));
-				//}
-				gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
-					objPos,
-					glm::vec3(
-						0.f,                                   // X rotation (pitch)
-						fmod(time1 * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
-						0.f                                    // Z rotation (roll)
-					),
-					glm::vec3(5.f)
-				));
-			}
-		}
+		//for (int i = -50; i <= 50; i++)
+		//{
+		//	for (int j = -50; j <= 50; j++)
+		//	{
+		//		glm::vec3 objPos = glm::vec3(i, 0.f, j);
+		//		//if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
+		//		//	gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+		//		//		objPos,
+		//		//		glm::vec3(
+		//		//			0.f,                                   // X rotation (pitch)
+		//		//			fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+		//		//			0.f                                    // Z rotation (roll)
+		//		//		),
+		//		//		glm::vec3(5.f)
+		//		//	));
+		//		//}
+		//		gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+		//			objPos,
+		//			glm::vec3(
+		//				0.f,                                   // X rotation (pitch)
+		//				fmod(time1 * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+		//				0.f                                    // Z rotation (roll)
+		//			),
+		//			glm::vec3(5.f)
+		//		));
+		//	}
+		//}
 
-		gltfRenderer.ExperimentalHelper();
+		/*gltfRenderer.ExperimentalHelper();
 		
 	
 		shader4.use();
 		shader4.setMat4("view", view);
 		shader4.setMat4("projection", projectionP);
-		gltfRenderer.GLTFMESHRender(shader4);
+		gltfRenderer.GLTFMESHRender(shader4);*/
 
-		*/
-		gltfRenderer.CleanUp();
+		
+		
 
 		reactphysics3d::Transform transform = body->getTransform();
 		reactphysics3d::Vector3 position = transform.getPosition();
@@ -466,10 +481,17 @@ int main()
 		shader4.setMat4("projection", projectionP);
 		gltfRenderer.GLTFMESHRender(shader4);
 
+		gltfRenderer.CleanUp();
+
 
 		world->update(timeStep);
 
 		Window::update();
+
+		memoryTracker->AddEndForMemoryTrackerEntry("Rendering");
+
+		memoryTracker->PrintCurrentMemoryUsage();
+		memoryTracker->PrettyPrintMemoryAllocationForTrackers();
 
 		PROFILE_FRAME();
 	}

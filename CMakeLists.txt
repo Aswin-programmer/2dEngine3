@@ -22,3 +22,4 @@ target_compile_definitions(GetIntoGameDevOPENGL PRIVATE
 # target_compile_definitions(GetIntoGameDevOPENGL PRIVATE 
 # 	RESOURCES_PATH="ASSETS/"
 # )
+

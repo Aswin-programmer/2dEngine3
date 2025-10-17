@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <memory>
 
 #include <ENGINE.h>
 #include <WINDOWS/Window.h>
@@ -21,3 +22,5 @@
 #include <reactphysics3d/reactphysics3d.h>
 
 #include <PROFILING/Profiler.h>
+
+#include <MEMORYTRACKER/MemoryTracker.h>
