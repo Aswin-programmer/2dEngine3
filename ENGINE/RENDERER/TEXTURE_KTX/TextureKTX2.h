@@ -10,10 +10,17 @@
 #include <GLFW/glfw3.h>
 #include <ktx.h>
 
+struct TextureType
+{
+	struct NORMAL {};
+	struct CUBEMAP {};
+};
+
 class TextureKTX2
 {
 public:
-	TextureKTX2(std::string filepath);
+	TextureKTX2(std::string filepath, struct TextureType::NORMAL);
+	TextureKTX2(std::string filepath, struct TextureType::CUBEMAP);
 	TextureKTX2(std::string filepath, GLenum target);
 	~TextureKTX2();
 

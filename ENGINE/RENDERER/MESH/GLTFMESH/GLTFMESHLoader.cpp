@@ -1,4 +1,5 @@
 #include "GLTFMESHLoader.h"
+#include "GLTFMESHLoader.h"
 #include <iostream>
 
 // Define the static member
@@ -57,4 +58,12 @@ tinygltf::Model& GLTFMESHLoader::GetGLTFModel(std::string fileName)
         throw std::runtime_error("[GLTF Loader] Model not found: " + fileName);
     }
     return it->second;
+}
+
+void GLTFMESHLoader::ClearAllGLTFModels()
+{
+    std::cout << "[GLTF Loader] Clearing all loaded models ("
+        << GLTFModels.size() << " models)...\n";
+    GLTFModels.clear();
+    std::cout << "[GLTF Loader] All models cleared.\n";
 }

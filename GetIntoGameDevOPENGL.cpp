@@ -1,6 +1,9 @@
 ﻿// GetIntoGameDevOPENGL.cpp : Defines the entry point for the application.
 //
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
 // Force NVIDIA GPU
 extern "C" {
 
@@ -135,7 +138,7 @@ int main()
 	Shader shader = Shader((std::string(RESOURCES_PATH) + "SHADER/cube.vert").c_str()
 		, (std::string(RESOURCES_PATH) + "SHADER/cube.frag").c_str());
 
-	TextureKTX2 textureKTX2 = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/cube.ktx2").c_str());
+	TextureKTX2 textureKTX2 = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/KTX/cube.ktx2").c_str(), TextureType::NORMAL{});
 
 	Shader shader2 = Shader(
 		(std::string(RESOURCES_PATH) + "SHADER/GEO_TEST/geo_vert.glsl").c_str(),
@@ -251,7 +254,7 @@ int main()
 	Shader skyboxShader = Shader((std::string(RESOURCES_PATH) + "SHADER/CUBE_MAP/cube_map_vert.glsl").c_str()
 		, (std::string(RESOURCES_PATH) + "SHADER/CUBE_MAP/cube_map_frag.glsl").c_str());
 
-	TextureKTX2 skyboxTexture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/CUBEMAP/skybox.ktx2").c_str());
+	TextureKTX2 skyboxTexture = TextureKTX2((std::string(RESOURCES_PATH) + "TEXTURE/CUBEMAP/skybox.ktx2").c_str(), TextureType::CUBEMAP{});
 
 	//    ##          PHYSICS SECTION          ## 
 	
@@ -495,11 +498,14 @@ int main()
 
 		PROFILE_FRAME();
 	}
+
+	GLTFMESHLoader::ClearAllGLTFModels();
 	
 	Window::cleanup();
 
 	physicsCommon.destroyPhysicsWorld(world);
 
+	_CrtDumpMemoryLeaks();
 
 	return 0;
 }

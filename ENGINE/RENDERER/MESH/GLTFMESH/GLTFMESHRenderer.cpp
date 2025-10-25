@@ -1,5 +1,4 @@
 #include "GLTFMESHRenderer.h"
-#include "GLTFMESHRenderer.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION

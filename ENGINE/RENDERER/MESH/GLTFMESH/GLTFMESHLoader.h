@@ -16,6 +16,7 @@ public:
 
 	static bool LoadGLTFModel(std::string filePath);
 	static tinygltf::Model& GetGLTFModel(std::string fileName);
+	static void ClearAllGLTFModels();
 
 private:
 	static std::unordered_map<std::string, tinygltf::Model> GLTFModels;

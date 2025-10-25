@@ -1,15 +1,19 @@
 #include "TextureKTX2.h"
-#include "TextureKTX2.h"
-#include "TextureKTX2.h"
-#include "TextureKTX2.h"
 
-TextureKTX2::TextureKTX2(std::string filepath)
+TextureKTX2::TextureKTX2(std::string filepath, struct TextureType::NORMAL)
 	:
-	textureID{0},
-	target{GL_TEXTURE_2D}
+	textureID{ 0 },
+	target{ GL_TEXTURE_2D }
 {
 	//LoadTX2Texture(ConvertPNG2KTG2(filepath).c_str());
 	//LoadTX2Texture(filepath.c_str());
+}
+
+TextureKTX2::TextureKTX2(std::string filepath, struct TextureType::CUBEMAP)
+	:
+	textureID{ 0 },
+	target{ GL_TEXTURE_2D }
+{
 	LoadKTX2CubeMap(filepath.c_str());
 }
 

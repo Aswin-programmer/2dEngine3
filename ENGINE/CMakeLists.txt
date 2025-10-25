@@ -11,8 +11,6 @@ endif()
 
 project ("ENGINE")
 
-option(TRACY_ENABLE "Enable Tracy profiler" ON)
-
 add_subdirectory(DEPENDENCIES/GLFW)
 add_subdirectory(DEPENDENCIES/GLAD)
 add_subdirectory(DEPENDENCIES/GLM)
@@ -20,6 +18,9 @@ add_subdirectory(DEPENDENCIES/KTX)
 add_subdirectory(DEPENDENCIES/TINYGLTF)
 add_subdirectory(DEPENDENCIES/TRACY)
 add_subdirectory(DEPENDENCIES/REACTPHYSICS3D)
+
+option(TRACY_ENABLE "Enable Tracy profiler" OFF)
+set(TRACY_ENABLE ${TRACY_ENABLE} CACHE BOOL "Enable profiling" FORCE)
 
 # Add source to this project's library.
 add_library (ENGINE 
@@ -65,11 +66,16 @@ target_link_libraries(ENGINE PUBLIC
 	glm
 	ktx
 	tinygltf
-	TracyClient
 	reactphysics3d
 )
 
-target_compile_definitions(ENGINE PUBLIC TRACY_ENABLE)
+if (TRACY_ENABLE)
+	message(STATUS ">> Tracy profiling ENABLED for ENGINE")
+	target_compile_definitions(ENGINE PUBLIC TRACY_ENABLE)
+	target_link_libraries(ENGINE PUBLIC TracyClient)
+else()
+	message(STATUS ">> Tracy profiling DISABLED for ENGINE")
+endif()
 
 
 
