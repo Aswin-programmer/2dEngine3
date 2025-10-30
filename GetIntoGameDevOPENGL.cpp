@@ -11,7 +11,10 @@ extern "C" {
 }
 #define M_PI 3.14159265358979323846
 
+#define NOMINMAX
+
 #include "GetIntoGameDevOPENGL.h"
+#include <RENDERER/TEXT/TextRenderer.h>
 
 // Opengl Callbacks
 void processKeyInput(GLFWwindow* window);
@@ -166,7 +169,7 @@ int main()
 	//GLTFMESHRenderer gltfMeshRenderer = GLTFMESHRenderer(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf");
 	Shader shader4 = Shader((std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/gltf_vert.glsl").c_str()
 		, (std::string(RESOURCES_PATH) + "SHADER/GLTF_MODEL/gltf_frag.glsl").c_str());
-
+	shader4.SetupDefaultTextureSlots();
 	if (!GLTFMESHLoader::LoadGLTFModel(std::string(RESOURCES_PATH) + "GLTFMODEL/MIXED_MODEL/mix.gltf"))
 	{
 		std::cout << "Failed to load the sample model!\n";
@@ -190,7 +193,8 @@ int main()
 	gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
 		glm::vec3(0.f, 0.f, 0.f),
 		glm::vec3(0.f, 0.f, 0.f),
-		glm::vec3(1.f, 1.f, 1.f)
+		glm::vec3(1.f, 1.f, 1.f),
+		-1
 	));
 
 
@@ -287,9 +291,20 @@ int main()
 
 	// ##                       End of physics section                ##
 
+	// ##      Text Renderering ##
+	
+	std::shared_ptr<TextRenderer> textRenderer = std::make_shared<TextRenderer>(
+		(std::string(RESOURCES_PATH) + "FONTS\TEST1\test.ttf"),
+		Window::getWidth(),
+		Window::getHeight()
+	);
+	textRenderer->InitTextRenderer();
+	
+	// ## END OF TEXT RENDERING ##
+
 	while (!Window::shouldClose())
 	{
-		PROFILE_SCOPE_N("MainLoop");
+		//PROFILE_SCOPE_N("MainLoop");
 
 		memoryTracker->AddMemoryTrackerEntry("Rendering");
 
@@ -451,7 +466,8 @@ int main()
 		gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
 			glm::vec3(position.x, position.y, position.z),
 			glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),
-			glm::vec3(1.f, 1.f, 1.f)
+			glm::vec3(1.f, 1.f, 1.f),
+			-1
 		));
 
 		reactphysics3d::Transform transform2 = ground->getTransform();
@@ -470,10 +486,25 @@ int main()
 				GLTFModelOrientation(
 					glm::vec3(position2.x, position2.y, position2.z),
 					glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),            // rotation (you can also extract quaternion if needed)
-					glm::vec3(size.x, size.y, size.z)    // scale == size
+					glm::vec3(size.x, size.y, size.z),    // scale == size
+					-1
 				)
 			);
 		}
+
+		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+			glm::vec3(3.f, 3.f, 0.f),
+			glm::vec3(90.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f),
+			-1
+		));
+
+		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+			glm::vec3(-3.f, -1.f, 0.f),
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(50.f, 50.f, 50.f),
+			-1
+		));
 
 
 		gltfRenderer.ExperimentalHelper();
@@ -496,7 +527,11 @@ int main()
 		memoryTracker->PrintCurrentMemoryUsage();
 		memoryTracker->PrettyPrintMemoryAllocationForTrackers();
 
-		PROFILE_FRAME();
+		textRenderer->TextRendererDraw("Hello GUI!", 0, 0, 1, 0, 0, 0, GLYPH_NONE);
+
+		std::cout << "The FPS is : " << Window::GetFPSValue() << std::endl;
+
+		//PROFILE_FRAME();
 	}
 
 	GLTFMESHLoader::ClearAllGLTFModels();

@@ -30,6 +30,7 @@ bool MemoryTracker::AddEndForMemoryTrackerEntry(const std::string& processName)
 
 void MemoryTracker::PrettyPrintMemoryAllocationForTrackers()
 {
+#ifdef ENABLE_MEMORY_TRACKER_INFO
     std::cout << "### Summary Of Memory Allocation Of All The Trackers ###\n";
     for (const auto& it : memoryTrackerContainer)
     {
@@ -37,11 +38,14 @@ void MemoryTracker::PrettyPrintMemoryAllocationForTrackers()
             << " | Memory Consumed : " << it.second.GetMemoryConsumed()
             << " MB\n";
     }
+#endif
 }
 
 void MemoryTracker::PrintCurrentMemoryUsage()
 {
+#ifdef ENABLE_MEMORY_TRACKER_INFO
     std::cout << "The Current Memory Usage is : "
         << MemoryHelper::GetCurrentMemoryUsageMB()
         << " MB" << std::endl;
+#endif
 }

@@ -7,7 +7,8 @@ layout(location = 2) in vec2 aTexCoord;
 struct MeshOrientation {
     vec4 Position;
     vec4 Rotation; // Euler angles in degrees
-    vec4 Scale;
+    vec3 Scale;
+    int materialIndex;
 };
 
 layout(std430, binding = 0) buffer Orientations {
@@ -20,6 +21,7 @@ uniform uint u_NumInstances; // defensive bound check
 
 out vec2 vTexCoord;
 out vec3 vNormal;
+flat out int materialIndex;
 
 mat4 translate(vec3 t) {
     // Column-major ordering (last column = translation)
@@ -92,6 +94,9 @@ void main()
     //}
 
     MeshOrientation orientation = meshOrientations[instanceIndex];
+
+    materialIndex = orientation.materialIndex;
+
     mat4 model = composeModelMatrix(orientation);
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);

@@ -32,6 +32,7 @@ public:
 
     static float getdt() { return dt; }
     static void getFPS();
+    static float GetFPSValue();
     static int getWidth() { return m_width; }
     static int getHeight() { return m_height; }
 

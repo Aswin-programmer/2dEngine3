@@ -1,5 +1,4 @@
 #include "TextureLoader.h"
-#include "TextureLoader.h"
 
 std::map<std::string, std::pair<std::string, std::shared_ptr<TextureKTX2>>> TextureLoader::textureKTX2Map;
 
@@ -10,6 +9,9 @@ std::shared_ptr<TextureKTX2> TextureLoader::AddKTX2Texture(std::string path, std
 	{
 		textureKTX2Map[texture_name] = std::make_pair(path, std::make_shared<TextureKTX2>(path, TextureType::NORMAL{}));
 	}
+
+	std::cout << "[Texture Loader] Loaded: " << texture_name << "\n";
+
 	return textureKTX2Map[texture_name].second;
 }
 

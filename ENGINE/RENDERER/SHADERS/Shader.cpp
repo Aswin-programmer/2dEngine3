@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "Shader.h"
 
 Shader::Shader(
     const char* vertexPath, 
@@ -194,6 +195,17 @@ void Shader::setMat3(const std::string& name, const glm::mat3& mat) const
 void Shader::setMat4(const std::string& name, const glm::mat4& mat) const
 {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+}
+
+void Shader::SetupDefaultTextureSlots()
+{
+    glUseProgram(ID);
+    GLint samplerIndices[32];
+    for (int i = 0; i < 32; ++i) samplerIndices[i] = i;
+
+    GLint location = glGetUniformLocation(ID, "uTextures");
+    glUniform1iv(location, 32, samplerIndices);
+    glUseProgram(0);
 }
 
 void Shader::checkCompileErrors(unsigned int shader, std::string type)

@@ -26,6 +26,7 @@ GLTFMESHRenderer::~GLTFMESHRenderer()
     if (meshTexVBO) glDeleteBuffers(1, &meshTexVBO);
     if (meshEBO) glDeleteBuffers(1, &meshEBO);
     if (OrientationSSBO) glDeleteBuffers(1, &OrientationSSBO);
+    if (MaterialSSBO) glDeleteBuffers(1, &MaterialSSBO);
     if (IndirectCommandBuffer) glDeleteBuffers(1, &IndirectCommandBuffer);
     if (meshVAO) glDeleteVertexArrays(1, &meshVAO);
 }
@@ -75,6 +76,12 @@ void GLTFMESHRenderer::SetupGLTFMESHRenderer()
     glNamedBufferStorage(OrientationSSBO, sizeof(GLTFPrimitivesOrientation) * 20000, nullptr, GL_DYNAMIC_STORAGE_BIT);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, OrientationSSBO);
 
+    // Material SSBO (binding 1)
+    glCreateBuffers(1, &MaterialSSBO);
+    // size for instances (parameterize if needed)
+    glNamedBufferStorage(MaterialSSBO, sizeof(GLTFMaterial) * 20000, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, MaterialSSBO);
+
     // Indirect command buffer
     glCreateBuffers(1, &IndirectCommandBuffer);
     glNamedBufferStorage(IndirectCommandBuffer, sizeof(DrawElementsIndirectCommand) * 4096, nullptr, GL_DYNAMIC_STORAGE_BIT);
@@ -84,6 +91,8 @@ void GLTFMESHRenderer::CleanUp()
 {
     meshStructureForRendering.clear();
     primitivesOrientationPerMesh.clear();
+    GlobalMaterialTextureBindingIndex = 0;
+    gltfMaterialMapping.clear();
     indirectCommands.clear();
 
     cpuPositions.clear();
@@ -218,7 +227,41 @@ bool GLTFMESHRenderer::AddGLTFModelToRenderer(const std::string& modelName, cons
 
             meshStructureForRendering.emplace(key, msr);
 
+            if (model.textures.size() > 0)
+            {
+                for (size_t i = 0; i < model.textures.size(); i++)
+                {
+                    const tinygltf::Texture& tex = model.textures[i];
+                    const tinygltf::Image& image = model.images[tex.source];
 
+                    std::string filename = image.uri;
+
+                    // Find last underscore and last dot
+                    size_t underscorePos = filename.find_last_of('_');
+                    size_t dotPos = filename.find_last_of('.');
+
+                    std::string result;
+                    if (underscorePos != std::string::npos && dotPos != std::string::npos && underscorePos < dotPos) {
+                        result = filename.substr(underscorePos + 1, dotPos - underscorePos - 1);
+                    }
+
+                    // Temporary:
+                    if (result == "baseColor")
+                    {
+                        std::shared_ptr<TextureKTX2> texture = TextureLoader::GetKTX2Texture(image.uri.substr(0, image.uri.find_last_of('.')));
+                        texture->Bind(GlobalMaterialTextureBindingIndex);
+                        gltfMaterialMapping[key] = GLTFMaterial(GlobalMaterialTextureBindingIndex);
+                        GlobalMaterialTextureBindingIndex++;
+                    }
+                }
+            }
+        }
+
+        // Add material index to the model orientation
+        int currentMaterialIndex = -1;
+        if (gltfMaterialMapping.find(key) != gltfMaterialMapping.end())
+        {
+            currentMaterialIndex = gltfMaterialMapping[key].materialBindingIndex;
         }
 
         // compute local transform (position/rotation/scale)
@@ -263,7 +306,8 @@ bool GLTFMESHRenderer::AddGLTFModelToRenderer(const std::string& modelName, cons
         GLTFPrimitivesOrientation primOrient(
             glm::vec3(gltfModelOrientation.Position) + localPos,
             glm::vec3(gltfModelOrientation.Rotation) + localRotEuler,
-            glm::vec3(gltfModelOrientation.Scale) * localScale
+            glm::vec3(gltfModelOrientation.Scale) * localScale,
+            currentMaterialIndex
         );
 
         // Always push orientation for this instance
@@ -282,11 +326,16 @@ void GLTFMESHRenderer::GLTFMESHRender(Shader& shader)
 
     if (indirectCommands.empty()) return;
 
+    
+
+#ifdef ENABLE_RENDERER_INFO
     GLuint queryID;
     glGenQueries(1, &queryID);
 
     // Start timer query
     glBeginQuery(GL_TIME_ELAPSED, queryID);
+#endif // ENABLE_RENDERER_INFO
+
 
     // Draw
     glBindVertexArray(meshVAO);
@@ -305,6 +354,7 @@ void GLTFMESHRenderer::GLTFMESHRender(Shader& shader)
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
     glBindVertexArray(0);
 
+#ifdef ENABLE_RENDERER_INFO
     // End timer query
     glEndQuery(GL_TIME_ELAPSED);
 
@@ -317,6 +367,7 @@ void GLTFMESHRenderer::GLTFMESHRender(Shader& shader)
     // Convert from nanoseconds to milliseconds
     double gpuTimeMs = timeElapsed / 1e6;
     std::cout << "[GPU] GLTFMESHRender took: " << gpuTimeMs << " ms" << std::endl;
+#endif // ENABLE_RENDERER_INFO
 }
 
 void GLTFMESHRenderer::uploadBuffersIfRequired()
@@ -462,7 +513,7 @@ void GLTFMESHRenderer::ExperimentalHelper()
             instancesForThisMesh = static_cast<size_t>(msr.meshInstances);
             // push default orientations if none present
             for (size_t i = 0; i < instancesForThisMesh; ++i)
-                allOrientations.emplace_back(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f));
+                allOrientations.emplace_back(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), -1);
         }
 
         // create an indirect command per mesh
@@ -483,6 +534,18 @@ void GLTFMESHRenderer::ExperimentalHelper()
     if (!allOrientations.empty())
     {
         glNamedBufferSubData(OrientationSSBO, 0, allOrientations.size() * sizeof(GLTFPrimitivesOrientation), allOrientations.data());
+    }
+
+    // Uploading the material struct Here! Has to be done.
+    std::vector<GLTFMaterial> materialsForThisInstance;
+    for (const auto& material : gltfMaterialMapping)
+    {
+        materialsForThisInstance.push_back(material.second);
+    }
+    if (!materialsForThisInstance.empty())
+    {
+        glNamedBufferSubData(MaterialSSBO, 0
+            , materialsForThisInstance.size() * sizeof(GLTFMaterial), materialsForThisInstance.data());
     }
 
     // Upload indirect commands

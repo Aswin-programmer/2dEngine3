@@ -8,6 +8,8 @@
 
 #include <tiny_gltf.h>
 
+#include "../../TEXTURE_KTX/TextureLoader.h"
+
 class GLTFMESHLoader
 {
 public:

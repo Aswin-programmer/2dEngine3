@@ -18,6 +18,7 @@ add_subdirectory(DEPENDENCIES/KTX)
 add_subdirectory(DEPENDENCIES/TINYGLTF)
 add_subdirectory(DEPENDENCIES/TRACY)
 add_subdirectory(DEPENDENCIES/REACTPHYSICS3D)
+add_subdirectory(DEPENDENCIES/GLYPHGL)
 
 option(TRACY_ENABLE "Enable Tracy profiler" OFF)
 set(TRACY_ENABLE ${TRACY_ENABLE} CACHE BOOL "Enable profiling" FORCE)
@@ -54,19 +55,23 @@ add_library (ENGINE
 	"PROFILING/Profiler.h" 
 	"MEMORYTRACKER/MemoryTracker.cpp"
     "MEMORYTRACKER/MemoryTracker.h"
-)
+	"RENDERER/TEXT/TextRenderer.h" 
+	"RENDERER/TEXT/TextRenderer.cpp"
+	)
 
 set_property(TARGET ENGINE PROPERTY CXX_STANDARD 20)
 
 target_include_directories(ENGINE PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
  
 target_link_libraries(ENGINE PUBLIC 
+	opengl32
 	glfw 
 	glad 
 	glm
 	ktx
 	tinygltf
 	reactphysics3d
+	GlyphGL
 )
 
 if (TRACY_ENABLE)
@@ -77,5 +82,18 @@ else()
 	message(STATUS ">> Tracy profiling DISABLED for ENGINE")
 endif()
 
+if (ENABLE_MEMORY_TRACKER_INFO)
+    message(STATUS ">> Memory tracker ENABLED for ENGINE")
+    target_compile_definitions(ENGINE PUBLIC ENABLE_MEMORY_TRACKER_INFO)
+else()
+    message(STATUS ">> Memory tracker DISABLED for ENGINE")
+endif()
+
+if (ENABLE_RENDERER_INFO)
+    message(STATUS ">> Memory tracker ENABLED for ENGINE")
+    target_compile_definitions(ENGINE PUBLIC ENABLE_RENDERER_INFO)
+else()
+    message(STATUS ">> Memory tracker DISABLED for ENGINE")
+endif()
 
 

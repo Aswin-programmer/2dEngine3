@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "Window.h"
 
 // Initialize static members
 unsigned int Window::m_width = 0;
@@ -120,10 +121,10 @@ bool Window::init(const char* title) {
     // Set initial viewport
     glViewport(0, 0, m_width, m_height);
 
-    //Delta Time Initialization:
+    // Delta Time Initialization:
     beginTime = Time::getTime();
-    endTime;
-    dt = -1.0f;
+    endTime = beginTime;
+    dt = 0.0f;
 
     return true;
 }
@@ -163,7 +164,35 @@ GLFWwindow* Window::getGLFWWindow()
 
 void Window::getFPS()
 {
-    std::cout << " " << (1.0f / dt) << "FPS" << std::endl;
+    static float elapsed = 0.0f;
+    static int frames = 0;
+
+    frames++;
+    elapsed += dt;
+
+    if (elapsed >= 0.25f) { // update every 0.25 sec
+        float fps = frames / elapsed;
+        std::cout << "FPS: " << fps << std::endl;
+        frames = 0;
+        elapsed = 0.0f;
+    }
+}
+
+float Window::GetFPSValue()
+{
+    static float timer = 0.0f;
+    static int frames = 0;
+    static float fps = 0.0f;
+
+    frames++;
+    timer += dt;
+
+    if (timer >= 1.0f) {
+        fps = frames / timer;
+        frames = 0;
+        timer = 0.0f;
+    }
+    return fps;
 }
 
 void Window::cleanup()

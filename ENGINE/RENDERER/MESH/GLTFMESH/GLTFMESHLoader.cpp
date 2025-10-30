@@ -1,5 +1,4 @@
 #include "GLTFMESHLoader.h"
-#include "GLTFMESHLoader.h"
 #include <iostream>
 
 // Define the static member
@@ -42,6 +41,28 @@ bool GLTFMESHLoader::LoadGLTFModel(std::string filePath)
 
     // Extract just the file name (key for the map)
     std::string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
+
+    std::string directory = filePath.substr(0, filePath.find_last_of("/\\") + 1);
+
+    std::cout << "Number of Textures : " << model.textures.size() << std::endl;
+
+    for (size_t i = 0; i < model.textures.size(); i++)
+    {
+        const tinygltf::Texture& tex = model.textures[i];
+        const tinygltf::Image& image = model.images[tex.source];
+
+        std::string baseColorTexturePath = directory 
+            + (image.uri).substr(0, (image.uri).find_last_of('.')) + ".ktx2";
+
+        TextureLoader::AddKTX2Texture(baseColorTexturePath
+            , image.uri.substr(0, image.uri.find_last_of('.')), TextureType::NORMAL{});
+
+        std::cout << baseColorTexturePath << std::endl;
+
+        std::cout << image.uri << std::endl;
+
+
+    }
 
     // Store in map
     GLTFModels[fileName] = std::move(model);

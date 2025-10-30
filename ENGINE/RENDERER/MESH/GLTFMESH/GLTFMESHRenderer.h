@@ -39,16 +39,34 @@ struct GLTFModelOrientation
     // store as vec4 for easy SSBO upload
     glm::vec4 Position;
     glm::vec4 Rotation; // Euler degrees (temporarily). Ideally use quaternion / matrix.
-    glm::vec4 Scale;
+    glm::vec3 Scale;
+    int materialIndex;
 
     GLTFModelOrientation() = default;
-    GLTFModelOrientation(const glm::vec3& p, const glm::vec3& r, const glm::vec3& s)
-        : Position(p, 1.0f), Rotation(r, 1.0f), Scale(s, 1.0f) {}
+    GLTFModelOrientation(const glm::vec3& p, const glm::vec3& r, const glm::vec3& s, int materialIndex)
+        : Position(p, 1.0f), Rotation(r, 1.0f), Scale(s), materialIndex{materialIndex} {
+    }
 };
 
 struct GLTFPrimitivesOrientation : public GLTFModelOrientation
 {
     using GLTFModelOrientation::GLTFModelOrientation;
+};
+
+struct GLTFMaterial
+{
+    int materialBindingIndex; // Stores the input of GL_TEXTURE_0
+    int temp1;
+    int temt2;
+    int temp3;
+
+    GLTFMaterial() = default;
+    GLTFMaterial(const int materialBindingIndex)
+        :
+        materialBindingIndex{materialBindingIndex}
+    {
+
+    }
 };
 
 struct MeshStructureForRendering
@@ -88,7 +106,10 @@ private:
     GLuint meshTexVBO = 0;
 
     GLuint OrientationSSBO = 0;
+    GLuint MaterialSSBO = 0;
     GLuint IndirectCommandBuffer = 0;
+
+    int GlobalMaterialTextureBindingIndex = 0;
 
     // CPU-side staging data
     std::vector<float> cpuPositions;   // contiguous floats (x,y,z) per vertex
@@ -103,6 +124,7 @@ private:
     // Structures describing each mesh/primitive
     std::unordered_map<std::string, MeshStructureForRendering> meshStructureForRendering;
     std::unordered_map<std::string, std::vector<GLTFPrimitivesOrientation>> primitivesOrientationPerMesh;
+    std::unordered_map<std::string, GLTFMaterial> gltfMaterialMapping;
 
     // Indirect draw commands (built from meshStructureForRendering + orientations)
     std::vector<DrawElementsIndirectCommand> indirectCommands;
