@@ -294,7 +294,7 @@ int main()
 	// ##      Text Renderering ##
 	
 	std::shared_ptr<TextRenderer> textRenderer = std::make_shared<TextRenderer>(
-		(std::string(RESOURCES_PATH) + "FONTS\TEST1\test.ttf"),
+		(std::string(RESOURCES_PATH) + "FONTS/DEBROSEE/DEBROSEE.ttf"),
 		Window::getWidth(),
 		Window::getHeight()
 	);
@@ -312,213 +312,227 @@ int main()
 
 		processKeyInput(Window::getGLFWWindow());
 
-		shader3.use();
-
-		// Create projection matrices [PERSPECTIVE]
-		glm::mat4 projectionP = glm::mat4(1.0f);
-		projectionP = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
-		shader3.setMat4("projection", projectionP);
-
-		//// Create projection matrix [ORTHO]
-		//glm::mat4 projectionO = glm::mat4(1.0f);
-		//projectionO = glm::ortho(0.0f, 640.0f, 0.0f, 480.0f, -1.0f, 1.0f);
-		//shader3.setMat4("projection", projectionO);
-
-		// Camera or View transformation
-		glm::mat4 view = camera.GetViewMatrix();
-		shader3.setMat4("view", view);
-
-		// Model matrix
-		glm::mat4 model = glm::mat4{ 1.f };
-		//glm::translate(model, glm::vec3(0.f, -15.f, 0.f));
-		shader3.setMat4("model", model);
-
-		//particleSystemRenderer.CleanUp();
-		particleSystemRenderer.RefreshParticles(Window::getdt());
-		particleSystemRenderer.Render();
-
-		glm::mat4 vp = projectionP * view;
-		Frustum frustum = ExtractFrustumPlanes(vp);
-
-		glm::vec3 objPos = glm::vec3(0.f, 0.f, 0.f);
-		float objRadius = 5.0f; // precomputed or loaded from model bounds
-
 		Window::clearScreen();
 		Window::processInput();
 
-		// --- Safe skybox draw (do this BEFORE drawing scene meshes or AFTER with depth mask off) ---
-
-		// Save minimal state (optional, but explicit)
-		GLboolean wasCull = glIsEnabled(GL_CULL_FACE);
-		GLboolean wasDepthTest = glIsEnabled(GL_DEPTH_TEST);
-		GLint prevDepthFunc;
-		glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
-
-		// Prepare state for skybox
-		glDisable(GL_CULL_FACE);                // draw inside faces easily
-		glDepthFunc(GL_LEQUAL);                 // allow skybox fragments at far plane
-		glDepthMask(GL_FALSE);                  // IMPORTANT: don't write to depth buffer
-
-		skyboxShader.use();
-		// Build pure rotation from yaw/pitch
-		glm::mat4 pureRotation = glm::mat4(1.0f);
-		pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetPitch()), glm::vec3(1, 0, 0));
-		pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetYaw()), glm::vec3(0, 1, 0));
-
-		skyboxShader.setMat4("u_view", pureRotation);
-		skyboxShader.setMat4("u_proj", projectionP);
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture.GetTextureID());
-		skyboxShader.setInt("skybox", 0);
-
-		glBindVertexArray(skyboxVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-
-		// Restore state
-		glDepthMask(GL_TRUE);                   // allow meshes to write depth again
-		glDepthFunc(GL_LESS);                   // restore typical depth test
-		if (!wasCull) glDisable(GL_CULL_FACE);  // optional restore; ensure CullFace is consistent
-		else glEnable(GL_CULL_FACE);
-		// (if you need to restore other state like glFrontFace/glCullFace, do it here)
-
-		
-		gltfRenderer.CleanUp();
-
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
-		//	glm::vec3(0.f, 0.f, 0.f),
-		//	glm::vec3(0.f, 0.f, 0.f),
-		//	glm::vec3(1.f, 1.f, 1.f)
-		//));
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
-		//	glm::vec3(1.f, 1.f, 0.f),
-		//	glm::vec3(0.f, 0.f, 0.f),
-		//	glm::vec3(1.f, 1.f, 1.f)
-		//));
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
-		//	glm::vec3(3.f, 1.f, 0.f),
-		//	glm::vec3(0.f, 0.f, 0.f),
-		//	glm::vec3(50.f, 50.f, 50.f)
-		//));
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-		//	glm::vec3(3.f, 3.f, 0.f),
-		//	glm::vec3(90.f, 0.f, 0.f),
-		//	glm::vec3(50.f, 50.f, 50.f)
-		//));
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
-		//	glm::vec3(-3.f, -1.f, 0.f),
-		//	glm::vec3(0.f, 0.f, 0.f),
-		//	glm::vec3(50.f, 50.f, 50.f)
-		//));
-		//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-		//	glm::vec3(-3.f, -3.f, 0.f),
-		//	glm::vec3(90.f, 0.f, 0.f),
-		//	glm::vec3(50.f, 50.f, 50.f)
-		//));
-
-		//float time1 = glfwGetTime();
-		//float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
-
-		//for (int i = -50; i <= 50; i++)
-		//{
-		//	for (int j = -50; j <= 50; j++)
-		//	{
-		//		glm::vec3 objPos = glm::vec3(i, 0.f, j);
-		//		//if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
-		//		//	gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
-		//		//		objPos,
-		//		//		glm::vec3(
-		//		//			0.f,                                   // X rotation (pitch)
-		//		//			fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
-		//		//			0.f                                    // Z rotation (roll)
-		//		//		),
-		//		//		glm::vec3(5.f)
-		//		//	));
-		//		//}
-		//		gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
-		//			objPos,
-		//			glm::vec3(
-		//				0.f,                                   // X rotation (pitch)
-		//				fmod(time1 * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
-		//				0.f                                    // Z rotation (roll)
-		//			),
-		//			glm::vec3(5.f)
-		//		));
-		//	}
-		//}
-
-		/*gltfRenderer.ExperimentalHelper();
-		
-	
-		shader4.use();
-		shader4.setMat4("view", view);
-		shader4.setMat4("projection", projectionP);
-		gltfRenderer.GLTFMESHRender(shader4);*/
-
-		
 		
 
-		reactphysics3d::Transform transform = body->getTransform();
-		reactphysics3d::Vector3 position = transform.getPosition();
-		reactphysics3d::Quaternion q = transform.getOrientation();
-		auto euler = ToEulerAngles(q);
-		gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
-			glm::vec3(position.x, position.y, position.z),
-			glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),
-			glm::vec3(1.f, 1.f, 1.f),
-			-1
-		));
+	//	shader3.use();
 
-		reactphysics3d::Transform transform2 = ground->getTransform();
-		reactphysics3d::Vector3 position2 = transform2.getPosition();
-		q = transform2.getOrientation();
-    	euler = ToEulerAngles(q);
-		reactphysics3d::Collider* collider = ground->getCollider(0);
-		reactphysics3d::BoxShape* shape = dynamic_cast<reactphysics3d::BoxShape*>(collider->getCollisionShape());
+	//	// Create projection matrices [PERSPECTIVE]
+	//	glm::mat4 projectionP = glm::mat4(1.0f);
+	//	projectionP = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 200.0f);
+	//	shader3.setMat4("projection", projectionP);
 
-		if(shape) {
-			reactphysics3d::Vector3 halfExtents = shape->getHalfExtents();
-			reactphysics3d::Vector3 size = halfExtents;  // full size
+	//	//// Create projection matrix [ORTHO]
+	//	//glm::mat4 projectionO = glm::mat4(1.0f);
+	//	//projectionO = glm::ortho(0.0f, 640.0f, 0.0f, 480.0f, -1.0f, 1.0f);
+	//	//shader3.setMat4("projection", projectionO);
 
-			gltfRenderer.AddGLTFModelToRenderer(
-				"cube.gltf",
-				GLTFModelOrientation(
-					glm::vec3(position2.x, position2.y, position2.z),
-					glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),            // rotation (you can also extract quaternion if needed)
-					glm::vec3(size.x, size.y, size.z),    // scale == size
-					-1
-				)
-			);
-		}
+	//	// Camera or View transformation
+	//	glm::mat4 view = camera.GetViewMatrix();
+	//	shader3.setMat4("view", view);
 
-		gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
-			glm::vec3(3.f, 3.f, 0.f),
-			glm::vec3(90.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f),
-			-1
-		));
+	//	// Model matrix
+	//	glm::mat4 model = glm::mat4{ 1.f };
+	//	//glm::translate(model, glm::vec3(0.f, -15.f, 0.f));
+	//	shader3.setMat4("model", model);
 
-		gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
-			glm::vec3(-3.f, -1.f, 0.f),
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(50.f, 50.f, 50.f),
-			-1
-		));
+	//	//particleSystemRenderer.CleanUp();
+	//	particleSystemRenderer.RefreshParticles(Window::getdt());
+	//	particleSystemRenderer.Render();
+
+	//	glm::mat4 vp = projectionP * view;
+	//	Frustum frustum = ExtractFrustumPlanes(vp);
+
+	//	glm::vec3 objPos = glm::vec3(0.f, 0.f, 0.f);
+	//	float objRadius = 5.0f; // precomputed or loaded from model bounds
+
+	//	
+
+	//	// --- Safe skybox draw (do this BEFORE drawing scene meshes or AFTER with depth mask off) ---
+
+	//	// Save minimal state (optional, but explicit)
+	//	GLboolean wasCull = glIsEnabled(GL_CULL_FACE);
+	//	GLboolean wasDepthTest = glIsEnabled(GL_DEPTH_TEST);
+	//	GLint prevDepthFunc;
+	//	glGetIntegerv(GL_DEPTH_FUNC, &prevDepthFunc);
+
+	//	// Prepare state for skybox
+	//	glDisable(GL_CULL_FACE);                // draw inside faces easily
+	//	glDepthFunc(GL_LEQUAL);                 // allow skybox fragments at far plane
+	//	glDepthMask(GL_FALSE);                  // IMPORTANT: don't write to depth buffer
+
+	//	skyboxShader.use();
+	//	// Build pure rotation from yaw/pitch
+	//	glm::mat4 pureRotation = glm::mat4(1.0f);
+	//	pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetPitch()), glm::vec3(1, 0, 0));
+	//	pureRotation = glm::rotate(pureRotation, glm::radians(camera.GetYaw()), glm::vec3(0, 1, 0));
+
+	//	skyboxShader.setMat4("u_view", pureRotation);
+	//	skyboxShader.setMat4("u_proj", projectionP);
+
+	//	glActiveTexture(GL_TEXTURE0);
+	//	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture.GetTextureID());
+	//	skyboxShader.setInt("skybox", 0);
+
+	//	glBindVertexArray(skyboxVAO);
+	//	glDrawArrays(GL_TRIANGLES, 0, 36);
+	//	glBindVertexArray(0);
+
+	//	// Restore state
+	//	glDepthMask(GL_TRUE);                   // allow meshes to write depth again
+	//	glDepthFunc(GL_LESS);                   // restore typical depth test
+	//	if (!wasCull) glDisable(GL_CULL_FACE);  // optional restore; ensure CullFace is consistent
+	//	else glEnable(GL_CULL_FACE);
+	//	// (if you need to restore other state like glFrontFace/glCullFace, do it here)
+
+	//	
+	//	gltfRenderer.CleanUp();
+
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("mix.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(0.f, 0.f, 0.f),
+	//	//	glm::vec3(0.f, 0.f, 0.f),
+	//	//	glm::vec3(1.f, 1.f, 1.f)
+	//	//));
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(1.f, 1.f, 0.f),
+	//	//	glm::vec3(0.f, 0.f, 0.f),
+	//	//	glm::vec3(1.f, 1.f, 1.f)
+	//	//));
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(3.f, 1.f, 0.f),
+	//	//	glm::vec3(0.f, 0.f, 0.f),
+	//	//	glm::vec3(50.f, 50.f, 50.f)
+	//	//));
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(3.f, 3.f, 0.f),
+	//	//	glm::vec3(90.f, 0.f, 0.f),
+	//	//	glm::vec3(50.f, 50.f, 50.f)
+	//	//));
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(-3.f, -1.f, 0.f),
+	//	//	glm::vec3(0.f, 0.f, 0.f),
+	//	//	glm::vec3(50.f, 50.f, 50.f)
+	//	//));
+	//	//gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+	//	//	glm::vec3(-3.f, -3.f, 0.f),
+	//	//	glm::vec3(90.f, 0.f, 0.f),
+	//	//	glm::vec3(50.f, 50.f, 50.f)
+	//	//));
+
+	//	//float time1 = glfwGetTime();
+	//	//float rotate = fmod(time * 50.0f, 360.0f); // rotate at 50 deg/sec
+
+	//	//for (int i = -50; i <= 50; i++)
+	//	//{
+	//	//	for (int j = -50; j <= 50; j++)
+	//	//	{
+	//	//		glm::vec3 objPos = glm::vec3(i, 0.f, j);
+	//	//		//if (IsSphereInsideFrustum(frustum, objPos, objRadius)) {
+	//	//		//	gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+	//	//		//		objPos,
+	//	//		//		glm::vec3(
+	//	//		//			0.f,                                   // X rotation (pitch)
+	//	//		//			fmod(time * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+	//	//		//			0.f                                    // Z rotation (roll)
+	//	//		//		),
+	//	//		//		glm::vec3(5.f)
+	//	//		//	));
+	//	//		//}
+	//	//		gltfRenderer.AddGLTFModelToRenderer("BarramundiFish.gltf", GLTFModelOrientation(
+	//	//			objPos,
+	//	//			glm::vec3(
+	//	//				0.f,                                   // X rotation (pitch)
+	//	//				fmod(time1 * 50.0f + (i + j) * 10.0f, 360.0f), // Y rotation (yaw) with offset per grid position
+	//	//				0.f                                    // Z rotation (roll)
+	//	//			),
+	//	//			glm::vec3(5.f)
+	//	//		));
+	//	//	}
+	//	//}
+
+	//	/*gltfRenderer.ExperimentalHelper();
+	//	
+	//
+	//	shader4.use();
+	//	shader4.setMat4("view", view);
+	//	shader4.setMat4("projection", projectionP);
+	//	gltfRenderer.GLTFMESHRender(shader4);*/
+
+	//	
+	//	
+
+	//	reactphysics3d::Transform transform = body->getTransform();
+	//	reactphysics3d::Vector3 position = transform.getPosition();
+	//	reactphysics3d::Quaternion q = transform.getOrientation();
+	//	auto euler = ToEulerAngles(q);
+	//	gltfRenderer.AddGLTFModelToRenderer(std::string("cube.gltf"), GLTFModelOrientation(
+	//		glm::vec3(position.x, position.y, position.z),
+	//		glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),
+	//		glm::vec3(1.f, 1.f, 1.f),
+	//		-1
+	//	));
+
+	//	reactphysics3d::Transform transform2 = ground->getTransform();
+	//	reactphysics3d::Vector3 position2 = transform2.getPosition();
+	//	q = transform2.getOrientation();
+ //   	euler = ToEulerAngles(q);
+	//	reactphysics3d::Collider* collider = ground->getCollider(0);
+	//	reactphysics3d::BoxShape* shape = dynamic_cast<reactphysics3d::BoxShape*>(collider->getCollisionShape());
+
+	//	if(shape) {
+	//		reactphysics3d::Vector3 halfExtents = shape->getHalfExtents();
+	//		reactphysics3d::Vector3 size = halfExtents;  // full size
+
+	//		gltfRenderer.AddGLTFModelToRenderer(
+	//			"cube.gltf",
+	//			GLTFModelOrientation(
+	//				glm::vec3(position2.x, position2.y, position2.z),
+	//				glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z)),            // rotation (you can also extract quaternion if needed)
+	//				glm::vec3(size.x, size.y, size.z),    // scale == size
+	//				-1
+	//			)
+	//		);
+	//	}
+
+	//	gltfRenderer.AddGLTFModelToRenderer(std::string("BarramundiFish.gltf"), GLTFModelOrientation(
+	//		glm::vec3(3.f, 3.f, 0.f),
+	//		glm::vec3(90.f, 0.f, 0.f),
+	//		glm::vec3(50.f, 50.f, 50.f),
+	//		-1
+	//	));
+
+	//	gltfRenderer.AddGLTFModelToRenderer(std::string("Avocado.gltf"), GLTFModelOrientation(
+	//		glm::vec3(-3.f, -1.f, 0.f),
+	//		glm::vec3(0.f, 0.f, 0.f),
+	//		glm::vec3(50.f, 50.f, 50.f),
+	//		-1
+	//	));
 
 
-		gltfRenderer.ExperimentalHelper();
-		
-	
-		shader4.use();
-		shader4.setMat4("view", view);
-		shader4.setMat4("projection", projectionP);
-		gltfRenderer.GLTFMESHRender(shader4);
+	//	gltfRenderer.ExperimentalHelper();
+	//	
+	//
+	//	shader4.use();
+	//	shader4.setMat4("view", view);
+	//	shader4.setMat4("projection", projectionP);
+	//	gltfRenderer.GLTFMESHRender(shader4);
 
-		gltfRenderer.CleanUp();
+	//	gltfRenderer.CleanUp();
 
 
-		world->update(timeStep);
+	//	world->update(timeStep);
+
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		textRenderer->TextRendererDraw("Hello GUI!", 100, 200, 1.0f, 1.0f, 1.0f, 1.0f, GLYPH_NONE);
+
+		glDisable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);
+
 
 		Window::update();
 
@@ -527,7 +541,7 @@ int main()
 		memoryTracker->PrintCurrentMemoryUsage();
 		memoryTracker->PrettyPrintMemoryAllocationForTrackers();
 
-		textRenderer->TextRendererDraw("Hello GUI!", 0, 0, 1, 0, 0, 0, GLYPH_NONE);
+		
 
 		std::cout << "The FPS is : " << Window::GetFPSValue() << std::endl;
 
